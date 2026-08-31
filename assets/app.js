@@ -5,9 +5,10 @@ import {
   $, clamp, pad, wait, norm, noise, b64, store, toast, notify,
   Sound, Win, setWinsListener, REDUCED, ASCII_K, resolveInto, typeInto, pick,
 } from './core.js';
-import { openTriangulacion, openCaja, openSecuencia, openDescifrar } from './games.js';
+import { openAnalisis, openCaja, openSecuencia, openDescifrar } from './games.js';
 import { openPoster } from './poster.js';
 import { Diario, openDiario, refreshDiarioIfOpen, avisarTareas, setTareaHandler } from './diario.js';
+import { Eventos } from './eventos.js';
 
 /* ─────────────────────────────────────────────────────────────
    CONFIGURACIÓN — edita solo este bloque
@@ -33,7 +34,7 @@ const CONFIG = {
 
   // Lo que entrega cada ejercicio.
   claves: {
-    lat:   { label: 'LATITUD',  value: '25.7617',   from: 'TRIANGULAR' },
+    lat:   { label: 'LATITUD',  value: '25.7617',   from: 'ANALIZAR' },
     lon:   { label: 'LONGITUD', value: '-80.1918',  from: 'CAJA 419' },
     hora:  { label: 'HORA',     value: '00:00',     from: 'SECUENCIA' },
     fecha: { label: 'FECHA',    value: '12.11.2026', from: 'DESCIFRAR' },
@@ -81,7 +82,7 @@ const MENSAJES = [
     cuerpo: [
       'No es una matrícula. No es un teléfono.',
       'Son distancias a tres repetidores. Con eso se fija un punto en el plano.',
-      'Le he dejado el simulador de campo cargado. Escriba TRIANGULAR.',
+      'Le he dejado la cinta del vestíbulo cargada en su equipo. Escriba ANALIZAR.',
     ] },
   { id: 'm5', de: 'CENTRAL', as: 'Primera lectura confirmada', trasClaves: 1,
     cuerpo: [
@@ -118,7 +119,7 @@ const State = {
   claves: new Set(store.get('claves', [])),
   seen: new Set(store.get('seen', [])),
   leidos: new Set(store.get('leidos', [])),
-  entregados: new Set(store.get('entregados', [])),
+  entregados: new Map(Object.entries(store.get('entregados', {}))),
 
   hasClave(id) { return this.claves.has(id); },
   get total() { return Object.keys(CONFIG.claves).length; },
@@ -132,6 +133,7 @@ const State = {
     toast(`LECTURA OBTENIDA · ${CONFIG.claves[id].label}`);
     Term.print(`>> LECTURA REGISTRADA: ${CONFIG.claves[id].label} = ${CONFIG.claves[id].value}`, 't-ok');
     entregarMensajes();
+    refreshReporteIfOpen();
     avisoTarea('tool', { lat: 'tri', lon: 'caja', hora: 'seq', fecha: 'cip' }[id]);
     if (this.complete) {
       Term.print('>> LAS CUATRO LECTURAS ESTÁN EN SU PODER. ESCRIBA POSICION.', 't-ok');
@@ -234,7 +236,7 @@ const Term = {
 const HELP = [
   'DIARIO         parte del día y tareas',
   'EXPEDIENTE     partes del caso 11-19',
-  'SUJETOS        ficha de los tres en fuga',
+  'INFORME        lo que lleva escrito del caso',
   'MENSAJES       correo interno',
   'HERRAMIENTAS   utilidades autorizadas',
   'CARTEL         generador de carteles de búsqueda',
@@ -305,8 +307,16 @@ function command(raw) {
     case 'EXPEDIENTE': case 'CASO':
       openExpediente(); Term.print('Abriendo expediente 11-19...', 't-ok'); break;
 
-    case 'SUJETOS': case 'SUJETO':
-      openSujetos(); Term.print('Abriendo ficha de sujetos...', 't-ok'); break;
+    case 'INFORME': case 'REPORTE': case 'SUJETOS':
+      openReporte(); Term.print('Abriendo su informe...', 't-ok'); break;
+
+    case 'ANTIVIRUS': case 'PURGA':
+      if (!Eventos.antivirus()) Term.type(['No hay nada que purgar. De momento.'], 't-ok');
+      break;
+
+    case 'LLAMAR': case 'CENTRALITA':
+      Eventos.lanzarLlamada();
+      Term.type(['Solicitud enviada a centralita. Le devolverán la llamada.'], 't-ok'); break;
 
     case 'MENSAJES': case 'CORREO':
       openMensajes(); Term.print('Abriendo correo interno...', 't-ok'); break;
@@ -314,7 +324,7 @@ function command(raw) {
     case 'HERRAMIENTAS': case 'UTILIDADES':
       Term.type([
         'UTILIDADES DE CAMPO AUTORIZADAS:',
-        '  TRIANGULAR    fijación de posición por distancias',
+        '  ANALIZAR      análisis fotograma a fotograma de la cinta',
         '  CARTEL        generador de carteles de búsqueda',
         '',
         'Este equipo tiene tres simuladores más que no figuran en el índice.',
@@ -322,9 +332,8 @@ function command(raw) {
       ], 't-ok');
       break;
 
-    case 'TRIANGULAR':
-      if (arg === 'FINAL' || arg === 'POSICION') { openFinal(); break; }
-      openTriangulacion(gameCtx); Term.print('Cargando ejercicio de triangulación...', 't-ok'); break;
+    case 'ANALIZAR': case 'CINTA': case 'CAMARA':
+      openAnalisis(gameCtx); Term.print('Cargando la cinta del vestíbulo...', 't-ok'); break;
 
     case 'CAJA':
       if (arg && arg !== '419') { Term.type(['No hay ninguna caja con ese número en el inventario.'], 't-warn'); break; }
@@ -500,6 +509,7 @@ async function openDoc(id) {
     await wait(50);
   }
   refreshExpedienteIfOpen();
+  refreshReporteIfOpen();
   refreshIcons();
   avisoTarea('frag', id);
 }
@@ -510,37 +520,148 @@ function refreshExpedienteIfOpen() {
 }
 
 /* ─────────────────────────────────────────────────────────────
-   sujetos
+   informe del agente
+
+   No es una ficha: es lo que el protagonista lleva escrito hasta
+   hoy. Cada línea aparece cuando se cumple su condición, así que
+   el informe crece contigo. Las anotaciones personales se le van
+   escapando de las manos según avanza.
    ───────────────────────────────────────────────────────────── */
-function openSujetos() {
-  avisoTarea('win', 'subj');
-  const win = Win.open({ id: 'subj', title: 'SUJETOS EN FUGA — ficha', w: 560, h: 400 });
-  if (win.body.dataset.built) return;
-  win.body.dataset.built = '1';
-  win.body.innerHTML = `
-    <p class="t-dim" style="font-size:.58rem;letter-spacing:.18em;margin:0 0 .9rem">
-      TRES IDENTIDADES SIN CONFIRMAR · EXPEDIENTE 11-19</p>
-    <div class="subj-grid">
-      ${CONFIG.sujetos.map((s) => `
-        <div class="subj">
-          <div class="sil">${s.sil}</div>
-          <h5>SUJETO ${s.n}</h5>
-          <p class="rol">${s.rol}</p>
-          <p class="det">${s.det}</p>
-        </div>`).join('')}
-    </div>
-    <p class="t-dim" style="font-size:.6rem;line-height:1.8;margin-top:1rem">
-      No hay rostros. No hay nombres. La cámara del vestíbulo aguantó once segundos
-      y en esos once segundos no se les ve la cara a ninguno de los tres.
-    </p>`;
+const REPORTE = [
+  // ── hechos ──
+  { s: 'HECHOS', si: () => Vault.open.has(1),
+    t: 'Sucursal 7 del Banco Meridiano, 03:41. Cuatro minutos exactos dentro. Tres personas.' },
+  { s: 'HECHOS', si: () => Vault.open.has(1),
+    t: 'No se disparó un solo tiro. No se forzó ninguna puerta. No se tocó ninguna otra caja.' },
+  { s: 'HECHOS', si: () => Vault.open.has(1),
+    t: 'Sustraído: el contenido íntegro de la caja de seguridad 419. Nada más.' },
+  { s: 'HECHOS', si: () => Vault.open.has(3),
+    t: '1.4 millones en efectivo permanecían a dos metros del punto de acceso. Intactos.' },
+  { s: 'HECHOS', si: () => Vault.open.has(3),
+    t: 'La 419 figuraba a nombre de una sociedad disuelta hace once años. Contenido declarado: "documentos".' },
+  { s: 'HECHOS', si: () => Vault.open.has(3),
+    t: 'Nadie ha denunciado el robo. El titular de la caja no ha llamado ni una vez.' },
+  { s: 'HECHOS', si: () => Vault.open.has(4),
+    t: 'Vehículo hallado calcinado once días después. Repostado antes del incendio. Cuentakilómetros manipulado a mano.' },
+  { s: 'HECHOS', si: () => Vault.open.has(5),
+    t: 'La cerradura de la 419 no fue forzada. Fue abierta. Cuatro dígitos, sin herramienta.' },
+  { s: 'HECHOS', si: () => Vault.open.has(6),
+    t: 'Emisión de radio en abierto desde la zona del mirador. Todas las noches, la misma hora, sin palabras.' },
+  { s: 'HECHOS', si: () => Vault.open.has(7),
+    t: 'Nota manuscrita hallada en el mirador, cifrada por sustitución simple.' },
+
+  // ── los tres ──
+  { s: 'LOS TRES', si: () => Vault.open.has(2),
+    t: 'SUJETO 1 — Camina despacio y mira las cámaras de frente. Sabe cuántas hay y dónde están.' },
+  { s: 'LOS TRES', si: () => Vault.open.has(2),
+    t: 'SUJETO 2 — No llega a entrar. Espera en el vano con el motor encendido a treinta metros.' },
+  { s: 'LOS TRES', si: () => Vault.open.has(2),
+    t: 'SUJETO 3 — No aparece en ningún fotograma. Sabemos que estuvo porque la 419 se abrió desde dentro.' },
+  { s: 'LOS TRES', si: () => State.hasClave('lat'),
+    t: 'Corrección: hay un reflejo en el cristal que no corresponde a nadie del plano. Puede que fueran cuatro. Puede que el tercero estuviera en otro sitio.' },
+  { s: 'LOS TRES', si: () => Vault.open.has(7),
+    t: 'Vistos juntos por última vez en el mirador. Sin prisa, sin equipaje. El testigo dice que no huían: esperaban.' },
+
+  // ── hipótesis ──
+  { s: 'HIPÓTESIS', si: () => Vault.open.has(3),
+    t: 'Descartada la motivación económica. Dejaron el dinero a la vista.' },
+  { s: 'HIPÓTESIS', si: () => Vault.open.has(3),
+    t: 'Alguien pagó once años de alquiler para que el contenido de esa caja llegara intacto a una fecha concreta.' },
+  { s: 'HIPÓTESIS', si: () => State.claves.size >= 2,
+    t: 'Los tres se conocían de antes. Mucho antes. Esto no se improvisa en once años.' },
+  { s: 'HIPÓTESIS', si: () => State.hasClave('fecha'),
+    t: 'La nota anuncia que dejarán una grabación antes de la fecha. No es una amenaza: es una cita.' },
+  { s: 'HIPÓTESIS', si: () => State.complete,
+    t: 'Conclusión provisional: el 11-19 no es un robo. Es una entrega que llevaba once años en curso.' },
+
+  // ── anotaciones personales ──
+  { s: 'ANOTACIONES', si: () => State.claves.size >= 1,
+    t: 'Llevo tres días con esto y todavía no sé qué estoy buscando.' },
+  { s: 'ANOTACIONES', si: () => State.claves.size >= 2,
+    t: 'He vuelto a quedarme pasada la medianoche. Nadie me lo ha pedido.' },
+  { s: 'ANOTACIONES', si: () => Vault.open.has(5),
+    t: 'El sujeto 3 estuvo sentado delante de esa cerradura escuchándola. Doce intentos. Yo no tengo esa paciencia para nada.' },
+  { s: 'ANOTACIONES', si: () => Vault.open.has(7),
+    t: 'El testigo dijo que miraban el mar y contaban días. Llevo una semana pensando en esa frase.' },
+  { s: 'ANOTACIONES', si: () => State.claves.size >= 3,
+    t: 'Empiezo a tener la sensación de que el expediente me está leyendo a mí.' },
+  { s: 'ANOTACIONES', si: () => State.complete,
+    t: 'No quiero detenerlos. Ahí está el problema. Y creo que en Central ya lo saben.' },
+  { s: 'ANOTACIONES', si: () => Vault.open.has(8),
+    t: 'Cierro el expediente. No por orden: porque ya sé lo que había dentro, y no es asunto de la policía.' },
+];
+
+const SECCIONES = {
+  HECHOS: 'HECHOS ESTABLECIDOS',
+  'LOS TRES': 'LOS TRES SUJETOS',
+  'HIPÓTESIS': 'HIPÓTESIS DE TRABAJO',
+  ANOTACIONES: 'ANOTACIONES PERSONALES',
+};
+
+function openReporte() {
+  avisoTarea('win', 'rep');
+  const win = Win.open({ id: 'rep', title: 'INFORME DEL AGENTE — 11-19', w: 580, h: 480 });
+  renderReporte(win.body);
+}
+
+function renderReporte(body) {
+  const activas = REPORTE.filter((r) => { try { return r.si(); } catch { return false; } });
+  const total = REPORTE.length;
+
+  body.innerHTML = `
+    <p class="rep-cab">REDACTA: AGENTE ${agent().id} · EXPEDIENTE 11-19 · K.P.D.</p>
+    <div class="rep-prog"><span style="width:${(activas.length / total) * 100}%"></span></div>
+    <p class="rep-sub">${activas.length} de ${total} entradas redactadas</p>
+    <div id="repCuerpo"></div>`;
+
+  const cuerpo = body.querySelector('#repCuerpo');
+
+  for (const [clave, titulo] of Object.entries(SECCIONES)) {
+    const lineas = activas.filter((r) => r.s === clave);
+    const sec = document.createElement('section');
+    sec.className = 'rep-sec' + (clave === 'ANOTACIONES' ? ' personal' : '');
+    sec.innerHTML = `<h5>${titulo}</h5>`;
+
+    if (!lineas.length) {
+      sec.innerHTML += `<p class="rep-vacio">— sin entradas todavía —</p>`;
+    } else {
+      for (const l of lineas) {
+        const p = document.createElement('p');
+        p.className = 'rep-linea';
+        p.textContent = l.t;
+        sec.appendChild(p);
+      }
+    }
+    cuerpo.appendChild(sec);
+  }
+
+  const pie = document.createElement('p');
+  pie.className = 'rep-pie';
+  pie.textContent = activas.length === total
+    ? 'Informe cerrado.'
+    : 'El informe se completa según avanza el expediente.';
+  cuerpo.appendChild(pie);
+}
+
+function refreshReporteIfOpen() {
+  const w = Win.get('rep');
+  if (w) renderReporte(w.body);
 }
 
 /* ─────────────────────────────────────────────────────────────
    correo interno
    ───────────────────────────────────────────────────────────── */
+/** Los entregados, del más reciente al más antiguo. */
 function disponibles() {
-  return MENSAJES.filter((m) => State.entregados.has(m.id));
+  return MENSAJES
+    .filter((m) => State.entregados.has(m.id))
+    .sort((a, b) => State.entregados.get(b.id) - State.entregados.get(a.id));
 }
+
+const horaEntrega = (id) => {
+  const t = State.entregados.get(id);
+  return t ? new Date(t).toLocaleTimeString('es', { hour: '2-digit', minute: '2-digit' }) : '';
+};
 const sinLeer = () => disponibles().filter((m) => !State.leidos.has(m.id)).length;
 
 function entregarMensajes(silencioso = false) {
@@ -553,14 +674,14 @@ function entregarMensajes(silencioso = false) {
       (m.trasSeg !== undefined && seg >= m.trasSeg) ||
       (m.trasClaves !== undefined && State.claves.size >= m.trasClaves);
     if (!listo) continue;
-    State.entregados.add(m.id);
+    State.entregados.set(m.id, Date.now());
     nuevos += 1;
     if (!silencioso) notify(m.de, m.as, () => { openMensajes(); abrirMensaje(m.id); });
     // uno por vuelta: así gotean en lugar de amontonarse en la esquina
     break;
   }
   if (nuevos) {
-    store.set('entregados', [...State.entregados]);
+    store.set('entregados', Object.fromEntries(State.entregados));
     refreshIcons();
     refreshMensajesIfOpen();
   }
@@ -588,7 +709,7 @@ function renderMensajes(body) {
     b.type = 'button';
     b.className = 'msg' + (State.leidos.has(m.id) ? '' : ' unread');
     b.innerHTML = `<span class="de">${m.de}</span><span class="as"></span>
-      <span class="dt">${State.leidos.has(m.id) ? 'leído' : 'nuevo'}</span>`;
+      <span class="dt">${State.leidos.has(m.id) ? horaEntrega(m.id) : 'NUEVO'}</span>`;
     b.querySelector('.as').textContent = m.as;
     b.addEventListener('click', () => abrirMensaje(m.id));
     wrap.appendChild(b);
@@ -783,32 +904,60 @@ const ICONS = [
   { id: 'exp', gl: '▤', lb: 'EXPEDIENTE 11-19', act: openExpediente,
     badge: () => Vault.manifest && [...Vault.open.keys()].some((k) => !State.seen.has(k)) },
   { id: 'msg', gl: '✉', lb: 'CORREO', act: openMensajes, badge: () => sinLeer() > 0 },
-  { id: 'subj', gl: '◍', lb: 'SUJETOS', act: openSujetos },
+  { id: 'rep', gl: '✒', lb: 'INFORME', act: openReporte },
   { id: 'poster', gl: '◫', lb: 'CARTEL', act: openPoster },
-  { id: 'tri', gl: '◬', lb: 'TRIANGULAR', act: () => openTriangulacion(gameCtx) },
+  { id: 'tape', gl: '▣', lb: 'ANÁLISIS DE CINTA', act: () => openAnalisis(gameCtx) },
   { id: 'final', gl: '⌖', lb: 'POSICIÓN', act: openFinal, need: () => State.complete },
   { id: 'trailer', gl: '▶', lb: 'PRUEBA A/V', act: openTrailer, need: () => State.complete },
 ];
 
+/**
+ * Sólo crea los iconos que falten y actualiza los avisos.
+ * Nunca vacía la lista: hacerlo reiniciaba la animación de entrada
+ * en cada refresco y el escritorio parpadeaba solo cada pocos segundos.
+ */
 function refreshIcons() {
   const ul = $('icons');
   if (!ul) return;
-  ul.innerHTML = '';
-  ICONS.forEach((ic, i) => {
-    if (ic.need && !ic.need()) return;
-    const li = document.createElement('li');
-    li.className = 'icon';
-    li.tabIndex = 0;
-    li.setAttribute('role', 'button');
-    li.style.animationDelay = i * 55 + 'ms';
-    li.innerHTML = `<span class="gl">${ic.gl}</span><span class="lb">${ic.lb}</span>` +
-      (ic.badge?.() ? '<span class="badge"></span>' : '');
-    const run = () => ic.act();
-    li.addEventListener('dblclick', run);
-    li.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); run(); } });
-    if (matchMedia('(pointer: coarse)').matches) li.addEventListener('click', run);
-    ul.appendChild(li);
-  });
+  let orden = 0;
+
+  for (const ic of ICONS) {
+    const visible = !ic.need || ic.need();
+    let li = ul.querySelector(`.icon[data-id="${ic.id}"]`);
+
+    if (!visible) { li?.remove(); continue; }
+
+    if (!li) {
+      li = document.createElement('li');
+      li.className = 'icon';
+      li.dataset.id = ic.id;
+      li.tabIndex = 0;
+      li.setAttribute('role', 'button');
+      li.style.animationDelay = orden * 55 + 'ms';
+      li.innerHTML = `<span class="gl">${ic.gl}</span><span class="lb">${ic.lb}</span>`;
+      const run = () => ic.act();
+      li.addEventListener('dblclick', run);
+      li.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); run(); }
+      });
+      if (matchMedia('(pointer: coarse)').matches) li.addEventListener('click', run);
+      // se inserta en su sitio para respetar el orden de ICONS
+      const siguiente = [...ul.children][orden] || null;
+      ul.insertBefore(li, siguiente);
+    }
+
+    // el aviso se actualiza sin tocar el resto del icono
+    const quiere = !!ic.badge?.();
+    const tiene = !!li.querySelector('.badge');
+    if (quiere && !tiene) {
+      const b = document.createElement('span');
+      b.className = 'badge';
+      li.appendChild(b);
+    } else if (!quiere && tiene) {
+      li.querySelector('.badge').remove();
+    }
+    orden += 1;
+  }
 }
 
 function refreshStatus() {
@@ -822,12 +971,12 @@ setTareaHandler((kind, value) => {
   if (kind === 'frag') { openExpediente(); const d = Vault.open.get(Number(value)); if (d) openDoc(Number(value)); return; }
   if (kind === 'cmd') { openConsole(); command(value); return; }
   if (kind === 'win') {
-    ({ msg: openMensajes, subj: openSujetos, final: openFinal, trailer: openTrailer,
+    ({ msg: openMensajes, subj: openReporte, rep: openReporte, final: openFinal, trailer: openTrailer,
        exp: openExpediente, poster: openPoster }[value] || (() => {}))();
     return;
   }
   if (kind === 'tool') {
-    ({ tri: () => openTriangulacion(gameCtx), caja: () => openCaja(gameCtx),
+    ({ tri: () => openAnalisis(gameCtx), caja: () => openCaja(gameCtx),
        seq: () => openSecuencia(gameCtx), cip: () => openDescifrar(gameCtx) }[value] || (() => {}))();
   }
 });
@@ -879,33 +1028,108 @@ function tick() {
    ───────────────────────────────────────────────────────────── */
 let sesionInicio = Date.now();
 
+/* secuencia de arranque: fases con ritmo distinto, no una lista plana */
 const BOOT = [
-  ['K.P.D. FIELD TERMINAL — BIOS 11.19', 'dm'],
+  ['KAZOO POLICE DEPARTMENT', 'hi'],
+  ['TERMINAL DE CAMPO — BIOS 11.19', 'dm'],
+  ['(c) K.P.D. SISTEMAS · TODOS LOS DERECHOS RESERVADOS', 'dm'],
   ['', 'dm'],
-  ['Comprobando memoria .................. 65536 KB', 'ok'],
-  ['Bus de datos ......................... ESTABLE', 'ok'],
-  ['Enlace con archivo central ........... ESTABLE', 'ok'],
-  ['Módulo criptográfico AES-256-GCM ..... CARGADO', 'ok'],
-  ['Llaves de desclasificación ........... 1 DE 8 DISPONIBLES', 'wr'],
-  ['Reloj del sistema .................... SINCRONIZADO', 'ok'],
+  ['> POST', 'hi'],
+  ['  Procesador ......................... K7-2200  OK', 'ok'],
+  ['  Memoria base ...................... 640 KB    OK', 'ok'],
+  ['  Memoria extendida ................. 65536 KB  OK', 'ok'],
+  ['  Controlador de vídeo .............. CGA/EGA   OK', 'ok'],
+  ['  Unidad de cinta ................... AUSENTE', 'wr'],
   ['', 'dm'],
-  ['Cargando entorno de casos abiertos...', 'dm'],
+  ['> RED', 'hi'],
+  ['  Enlace con archivo central ........ ESTABLE', 'ok'],
+  ['  Latencia .......................... 41 ms', 'ok'],
+  ['  Canal seguro ...................... NEGOCIADO', 'ok'],
+  ['  Registro de acceso ................ ACTIVO', 'wr'],
+  ['', 'dm'],
+  ['> CRIPTOGRAFÍA', 'hi'],
+  ['  Módulo AES-256-GCM ................ CARGADO', 'ok'],
+  ['  Derivación HKDF-SHA256 ............ CARGADO', 'ok'],
+  ['  Llaves de desclasificación ........ PARCIALES', 'wr'],
+  ['  Piezas selladas ................... EN ESPERA DE FECHA', 'wr'],
+  ['', 'dm'],
+  ['> EXPEDIENTES ABIERTOS', 'hi'],
+  ['  11-19 · BANCO MERIDIANO, SUCURSAL 7', 'ok'],
+  ['  Estado ............................ SIN RESOLVER', 'wr'],
+  ['  Antigüedad ........................ 14 MESES', 'wr'],
+  ['  Agentes asignados previamente ..... 5', 'wr'],
+  ['', 'dm'],
+  ['Montando entorno de casos abiertos...', 'dm'],
+  ['Preparando credencial...', 'dm'],
 ];
 
 async function bootSequence() {
   const el = $('boot');
+  const log = $('bootLog');
+  const fill = $('bootFill');
+  const pct = $('bootPct');
+
+  let saltado = false;
+  const saltar = () => { saltado = true; };
+  el.addEventListener('click', saltar);
+  addEventListener('keydown', saltar, { once: true });
+
+  const cerrar = () => {
+    el.classList.add('flash');
+    setTimeout(() => el.remove(), 520);
+    $('login').hidden = false;
+  };
+
   if (REDUCED) { el.remove(); $('login').hidden = false; return; }
-  for (const [txt, cls] of BOOT) {
+
+  const pinta = (i) => {
+    const avance = Math.round(((i + 1) / BOOT.length) * 100);
+    fill.style.width = avance + '%';
+    pct.textContent = avance + '%';
+  };
+
+  const t0 = performance.now();
+  const TOPE = 9000;                    // el arranque nunca pasa de nueve segundos
+
+  for (let i = 0; i < BOOT.length; i++) {
+    const [txt, cls] = BOOT[i];
     const p = document.createElement('p');
     p.className = cls;
-    el.appendChild(p);
-    if (txt) await typeInto(p, txt, 3);
-    await wait(txt ? 90 : 40);
+    log.appendChild(p);
+    while (log.scrollHeight > log.clientHeight && log.firstChild !== p) log.firstChild.remove();
+
+    // si el usuario salta, o si el navegador nos está frenando
+    // (pestaña en segundo plano), se vuelca lo que queda de golpe
+    if (saltado || performance.now() - t0 > TOPE) {
+      p.textContent = txt;
+      for (let k = i + 1; k < BOOT.length; k++) {
+        const q = document.createElement('p');
+        q.className = BOOT[k][1];
+        q.textContent = BOOT[k][0];
+        log.appendChild(q);
+        while (log.scrollHeight > log.clientHeight && log.firstChild !== q) log.firstChild.remove();
+      }
+      pinta(BOOT.length - 1);
+      break;
+    }
+
+    if (txt) {
+      // por bloques de seis: menos esperas, misma sensación
+      for (let c = 0; c <= txt.length; c += 6) {
+        p.textContent = txt.slice(0, c);
+        await wait(cls === 'hi' ? 16 : 8);
+      }
+      p.textContent = txt;
+      Sound.blip(cls === 'wr' ? 300 : 1400, 0.012, 0.02);
+    }
+
+    pinta(i);
+    await wait(txt === '' ? 70 : cls === 'hi' ? 210 : 45);
   }
-  await wait(420);
-  el.classList.add('out');
-  setTimeout(() => el.remove(), 460);
-  $('login').hidden = false;
+
+  pct.textContent = 'LISTO';
+  await wait(saltado ? 220 : 640);
+  cerrar();
 }
 
 async function boot() {
@@ -942,6 +1166,12 @@ async function boot() {
       `PARTE DIARIO: ${Diario.pendientesHoy()} tarea(s) pendientes. Escriba DIARIO.`,
     ], 't-ok');
   }
+
+  Eventos.init({
+    consola: (t, c) => Term.print(t, c),
+    registrarLlamada: () => refreshIcons(),
+  });
+  setTimeout(() => Eventos.arrancar(), 12000);
 
   // primeros mensajes, con algo de retardo para que se noten
   setTimeout(() => entregarMensajes(), 2600);

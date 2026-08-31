@@ -31,8 +31,6 @@
   <div class="blob b2"></div>
   <div class="blob b3"></div>
   <div class="grid"></div>
-  <div class="rings"><i></i><i></i><i></i></div>
-  <div class="radar"></div>
 </div>
 
 <!-- ══ capas de tubo ══ -->
@@ -41,7 +39,12 @@
 <div class="fx fx-vig" aria-hidden="true"></div>
 
 <!-- ══ arranque ══ -->
-<section id="boot" aria-label="Arranque del sistema"></section>
+<section id="boot" aria-label="Arranque del sistema">
+  <div class="boot-log" id="bootLog"></div>
+  <div class="boot-bar"><span id="bootFill"></span></div>
+  <p class="boot-pct" id="bootPct">0%</p>
+  <p class="boot-skip">pulsa para saltar</p>
+</section>
 
 <!-- ══ acceso ══ -->
 <section id="login" aria-label="Acceso al sistema" hidden>
@@ -83,12 +86,14 @@
   <div class="winlayer" id="winlayer"></div>
 
   <footer class="statusbar">
-    <span id="sbClaves">LECTURAS <b>0/4</b></span>
+    <span class="sb-tag">ABIERTAS</span>
     <div class="sb-wins" id="sbWins"></div>
+    <span id="sbClaves">LECTURAS <b>0/4</b></span>
     <span id="sbCountdown">—</span>
   </footer>
 </div>
 
+<div class="popups" id="popups"></div>
 <div class="notes" id="notes" aria-live="polite"></div>
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
