@@ -214,7 +214,7 @@ export function openPoster(ctx) {
 
     // sello inclinado
     cx.save();
-    cx.translate(W - 158, 170);
+    cx.translate(W - 205, 748);
     cx.rotate(-0.22);
     cx.strokeStyle = 'rgba(150,40,28,.5)';
     cx.lineWidth = 4;
