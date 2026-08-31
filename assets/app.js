@@ -7,6 +7,7 @@ import {
 } from './core.js';
 import { openTriangulacion, openCaja, openSecuencia, openDescifrar } from './games.js';
 import { openPoster } from './poster.js';
+import { Diario, openDiario, refreshDiarioIfOpen, avisarTareas, setTareaHandler } from './diario.js';
 
 /* ─────────────────────────────────────────────────────────────
    CONFIGURACIÓN — edita solo este bloque
@@ -131,12 +132,19 @@ const State = {
     toast(`LECTURA OBTENIDA · ${CONFIG.claves[id].label}`);
     Term.print(`>> LECTURA REGISTRADA: ${CONFIG.claves[id].label} = ${CONFIG.claves[id].value}`, 't-ok');
     entregarMensajes();
+    avisoTarea('tool', { lat: 'tri', lon: 'caja', hora: 'seq', fecha: 'cip' }[id]);
     if (this.complete) {
       Term.print('>> LAS CUATRO LECTURAS ESTÁN EN SU PODER. ESCRIBA POSICION.', 't-ok');
       notify('CENTRAL', 'Cuatro lecturas confirmadas. Abra POSICIÓN.', openFinal);
     }
   },
 };
+
+/** Avisa al parte diario de que se ha hecho algo que puede cerrar una tarea. */
+function avisoTarea(kind, value) {
+  const cerradas = Diario.notificar(kind, value);
+  if (cerradas.length) { avisarTareas(cerradas); refreshIcons(); }
+}
 
 const gameCtx = {
   claves: CONFIG.claves,
@@ -148,7 +156,7 @@ const gameCtx = {
    expediente cifrado
    ───────────────────────────────────────────────────────────── */
 const Vault = {
-  manifest: null, keys: {}, open: new Map(), offline: false,
+  manifest: null, keys: {}, keysDias: {}, open: new Map(), offline: false,
 
   async load() {
     const bust = '?v=' + Math.floor(Date.now() / 600000);
@@ -157,7 +165,7 @@ const Vault = {
         fetch('data/fragments.json' + bust).then((r) => r.json()),
         fetch('data/keys.json' + bust).then((r) => (r.ok ? r.json() : { keys: {} })).catch(() => ({ keys: {} })),
       ]);
-      this.manifest = m; this.keys = k.keys || {};
+      this.manifest = m; this.keys = k.keys || {}; this.keysDias = k.dias || {};
     } catch { this.offline = true; return false; }
 
     for (const f of this.manifest.fragments) {
@@ -224,6 +232,7 @@ const Term = {
 };
 
 const HELP = [
+  'DIARIO         parte del día y tareas',
   'EXPEDIENTE     partes del caso 11-19',
   'SUJETOS        ficha de los tres en fuga',
   'MENSAJES       correo interno',
@@ -281,12 +290,17 @@ function command(raw) {
   const parts = line.split(/\s+/);
   const cmd = parts[0];
   const arg = parts.slice(1).join(' ');
+  avisoTarea('cmd', line);
+  if (arg) avisoTarea('cmd', cmd);
 
   switch (cmd) {
     case 'AYUDA': case 'HELP': case '?':
       Term.type(['COMANDOS AUTORIZADOS:', ...HELP, '',
         'Este terminal acepta más órdenes de las que enseña.'], 't-sys');
       break;
+
+    case 'DIARIO': case 'PARTE':
+      openDiario(); Term.print('Abriendo el parte diario...', 't-ok'); break;
 
     case 'EXPEDIENTE': case 'CASO':
       openExpediente(); Term.print('Abriendo expediente 11-19...', 't-ok'); break;
@@ -487,6 +501,7 @@ async function openDoc(id) {
   }
   refreshExpedienteIfOpen();
   refreshIcons();
+  avisoTarea('frag', id);
 }
 
 function refreshExpedienteIfOpen() {
@@ -498,6 +513,7 @@ function refreshExpedienteIfOpen() {
    sujetos
    ───────────────────────────────────────────────────────────── */
 function openSujetos() {
+  avisoTarea('win', 'subj');
   const win = Win.open({ id: 'subj', title: 'SUJETOS EN FUGA — ficha', w: 560, h: 400 });
   if (win.body.dataset.built) return;
   win.body.dataset.built = '1';
@@ -551,6 +567,7 @@ function entregarMensajes(silencioso = false) {
 }
 
 function openMensajes() {
+  avisoTarea('win', 'msg');
   const win = Win.open({ id: 'msg', title: 'CORREO INTERNO — K.P.D.', w: 540, h: 420 });
   renderMensajes(win.body);
 }
@@ -611,6 +628,7 @@ async function abrirMensaje(id) {
    posición final
    ───────────────────────────────────────────────────────────── */
 function openFinal() {
+  avisoTarea('win', 'final');
   const win = Win.open({ id: 'final', title: 'TRIANGULACIÓN — punto de encuentro', w: 520, h: 480 });
   win.body.innerHTML = '';
 
@@ -703,6 +721,7 @@ function dibujarMapa(cv) {
    tráiler
    ───────────────────────────────────────────────────────────── */
 function openTrailer() {
+  avisoTarea('win', 'trailer');
   const win = Win.open({ id: 'trailer', title: CONFIG.trailer.titulo, w: 520, h: 380 });
   if (!State.complete) {
     win.body.innerHTML = `<p class="t-warn" style="font-size:.72rem;line-height:1.8">
@@ -759,6 +778,8 @@ function openCanales() {
    ───────────────────────────────────────────────────────────── */
 const ICONS = [
   { id: 'term', gl: '▙', lb: 'CONSOLA', act: openConsole },
+  { id: 'diario', gl: '▦', lb: 'PARTE DIARIO', act: () => openDiario(),
+    badge: () => Diario.sinVer() || Diario.pendientesHoy() > 0 },
   { id: 'exp', gl: '▤', lb: 'EXPEDIENTE 11-19', act: openExpediente,
     badge: () => Vault.manifest && [...Vault.open.keys()].some((k) => !State.seen.has(k)) },
   { id: 'msg', gl: '✉', lb: 'CORREO', act: openMensajes, badge: () => sinLeer() > 0 },
@@ -793,6 +814,23 @@ function refreshIcons() {
 function refreshStatus() {
   $('sbClaves').innerHTML = `LECTURAS <b>${State.claves.size}/${State.total}</b>`;
 }
+
+/* pulsar una tarea del parte lleva directamente a donde toca */
+setTareaHandler((kind, value) => {
+  refreshIcons();
+  if (!kind) return;
+  if (kind === 'frag') { openExpediente(); const d = Vault.open.get(Number(value)); if (d) openDoc(Number(value)); return; }
+  if (kind === 'cmd') { openConsole(); command(value); return; }
+  if (kind === 'win') {
+    ({ msg: openMensajes, subj: openSujetos, final: openFinal, trailer: openTrailer,
+       exp: openExpediente, poster: openPoster }[value] || (() => {}))();
+    return;
+  }
+  if (kind === 'tool') {
+    ({ tri: () => openTriangulacion(gameCtx), caja: () => openCaja(gameCtx),
+       seq: () => openSecuencia(gameCtx), cip: () => openDescifrar(gameCtx) }[value] || (() => {}))();
+  }
+});
 
 /* barra de tareas: una pestaña por ventana abierta */
 setWinsListener((list) => {
@@ -886,8 +924,13 @@ async function boot() {
   openConsole();
 
   const ok = await Vault.load();
+  await Diario.load(Vault.keysDias);
   refreshIcons();
   refreshExpedienteIfOpen();
+
+  if (Diario.sinVer()) {
+    setTimeout(() => notify('CENTRAL', 'Parte diario disponible.', () => openDiario()), 1400);
+  }
 
   if (!ok) {
     Term.type(['ERROR: sin enlace con el archivo central.',
@@ -896,6 +939,7 @@ async function boot() {
     Term.type([
       `ARCHIVO CENTRAL: ${Vault.open.size} de ${Vault.total} partes desclasificadas.`,
       Vault.next ? `SIGUIENTE: ${fmtDate(Vault.next.unlockAt)}` : 'EXPEDIENTE COMPLETO.',
+      `PARTE DIARIO: ${Diario.pendientesHoy()} tarea(s) pendientes. Escriba DIARIO.`,
     ], 't-ok');
   }
 
@@ -907,12 +951,19 @@ async function boot() {
   setInterval(async () => {
     const before = Vault.open.size;
     await Vault.load();
+    const antesDias = Diario.abiertos.size;
+    await Diario.load(Vault.keysDias);
+
     if (Vault.open.size > before) {
       refreshExpedienteIfOpen();
-      refreshIcons();
       Term.print('>> NUEVA PARTE DESCLASIFICADA EN EL EXPEDIENTE 11-19.', 't-ok');
       notify('ARCHIVO CENTRAL', 'Nueva parte desclasificada del 11-19.', openExpediente);
     }
+    if (Diario.abiertos.size > antesDias) {
+      refreshDiarioIfOpen();
+      notify('CENTRAL', 'Ha bajado el parte del día.', () => openDiario());
+    }
+    refreshIcons();
   }, 600000);
 }
 

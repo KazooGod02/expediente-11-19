@@ -491,3 +491,39 @@ button{font:inherit;color:inherit;background:none;border:0}
     transition-duration:.01ms!important}
   .fx-grain,.bgfx .radar{display:none}
 }
+
+/* ── parte diario ──────────────────────────────────────── */
+.dia-head{display:flex;gap:1rem;align-items:flex-start;justify-content:space-between;
+  padding-bottom:.7rem;margin-bottom:.9rem;border-bottom:1px solid var(--line)}
+.dia-fecha{margin:0;font-family:var(--disp);font-weight:600;font-size:.86rem;
+  letter-spacing:.12em;color:var(--ink)}
+.dia-sub{margin:.25rem 0 0;color:var(--dim);font-size:.55rem;letter-spacing:.18em}
+.dia-nivel{flex:0 0 auto;padding:.22rem .6rem;font-size:.54rem;letter-spacing:.16em;
+  border:1px solid var(--line-2);color:var(--dim);white-space:nowrap}
+.dia-nivel.n0{color:var(--dimmer);border-color:var(--line-2)}
+.dia-nivel.n1{color:var(--dim)}
+.dia-nivel.n2{color:var(--violet);border-color:var(--line)}
+.dia-nivel.n3{color:var(--pink);border-color:var(--line-hot);
+  box-shadow:0 0 16px rgba(255,122,208,.18)}
+
+.dia-parte p{margin:0 0 .7rem;font-size:.76rem;line-height:1.9;color:var(--ink);min-height:1.2em}
+
+.dia-tlabel{margin:1.3rem 0 .5rem;color:var(--dim);font-size:.55rem;letter-spacing:.2em}
+.dia-tareas{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:1px}
+.tarea{display:grid;grid-template-columns:auto 1fr auto;gap:.7rem;align-items:center;
+  padding:.5rem .45rem;border-left:2px solid var(--dimmer);font-size:.7rem;
+  color:var(--dim);transition:.15s}
+.tarea:hover{background:rgba(201,163,255,.07);transform:translateX(3px)}
+.tarea:focus-visible{outline:1px solid var(--violet);outline-offset:2px}
+.tarea .tick{width:1.1em;text-align:center;color:var(--dimmer)}
+.tarea .ob{font-size:.5rem;letter-spacing:.14em;color:var(--pink);white-space:nowrap}
+.tarea.ok{border-left-color:var(--mint);color:var(--dimmer)}
+.tarea.ok .tick{color:var(--mint)}
+.tarea.ok .txt{text-decoration:line-through;opacity:.65}
+.tarea.ok .ob{opacity:.35}
+.dia-sintareas{margin:1.3rem 0 0;padding-top:.8rem;border-top:1px solid var(--line-2);
+  color:var(--dimmer);font-size:.66rem;letter-spacing:.1em}
+
+.dia-nav{display:flex;align-items:center;justify-content:space-between;gap:.6rem;
+  margin-top:1.3rem;padding-top:.8rem;border-top:1px solid var(--line-2)}
+.dia-nav .t-dim{font-size:.55rem;letter-spacing:.14em}

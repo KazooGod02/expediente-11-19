@@ -1,7 +1,11 @@
 {
   "_aviso": "Llaves liberadas por fecha. Publicadas automáticamente; no se pueden adelantar.",
-  "updatedAt": "2026-08-31T00:59:59.498Z",
+  "updatedAt": "2026-08-31T04:44:00.179Z",
   "keys": {
     "1": "HI6qXv/+Ux3v+5ldp+EqKvX5dhwFFnOA6pM5hiG5Jbs="
+  },
+  "dias": {
+    "2026-08-30": "9HnlMMaEANR+Y9X6YQ4R+E7mCx5u8YP0NT5YZ5J+Mic=",
+    "2026-08-31": "XTcCeAVs69nFGpC19Gyvc/ACobuoAAY905rHGejj+TQ="
   }
 }

@@ -37,13 +37,17 @@ if (master.length !== 32) {
   process.exit(1);
 }
 
-const deriveKey = (id) =>
-  Buffer.from(hkdfSync('sha256', master, Buffer.from(HKDF_SALT), Buffer.from(`oic/parte/${id}`), 32));
+const deriveKey = (info) =>
+  Buffer.from(hkdfSync('sha256', master, Buffer.from(HKDF_SALT), Buffer.from(info), 32));
 
 const manifest = JSON.parse(readFileSync(join(ROOT, 'data', 'fragments.json'), 'utf8'));
+const diarioPath = join(ROOT, 'data', 'diario.json');
+const diario = existsSync(diarioPath) ? JSON.parse(readFileSync(diarioPath, 'utf8')) : { dias: [] };
+
 const keysPath = join(ROOT, 'data', 'keys.json');
-const existing = existsSync(keysPath) ? JSON.parse(readFileSync(keysPath, 'utf8')) : { keys: {} };
+const existing = existsSync(keysPath) ? JSON.parse(readFileSync(keysPath, 'utf8')) : {};
 const keys = existing.keys || {};
+const dias = existing.dias || {};
 
 const now = Date.now();
 const added = [];
@@ -51,11 +55,21 @@ const added = [];
 for (const f of manifest.fragments) {
   const due = argv.has('--all') || new Date(f.unlockAt).getTime() <= now;
   if (!due || keys[f.id]) continue;
-  if (!argv.has('--dry')) keys[f.id] = deriveKey(f.id).toString('base64');
-  added.push(f.id);
+  if (!argv.has('--dry')) keys[f.id] = deriveKey(`oic/parte/${f.id}`).toString('base64');
+  added.push('parte ' + f.id);
 }
 
-const pending = manifest.fragments.filter((f) => !keys[f.id]).map((f) => f.unlockAt).sort();
+for (const d of diario.dias) {
+  const due = argv.has('--all') || new Date(d.unlockAt).getTime() <= now;
+  if (!due || dias[d.d]) continue;
+  if (!argv.has('--dry')) dias[d.d] = deriveKey(`oic/dia/${d.d}`).toString('base64');
+  added.push('dia ' + d.d);
+}
+
+const pending = [
+  ...manifest.fragments.filter((f) => !keys[f.id]).map((f) => f.unlockAt),
+  ...diario.dias.filter((d) => !dias[d.d]).map((d) => d.unlockAt),
+].sort();
 
 if (argv.has('--dry')) {
   console.log(added.length ? `Publicaría: ${added.join(', ')}` : 'Nada por publicar.');
@@ -70,12 +84,12 @@ if (!added.length) {
 writeFileSync(
   keysPath,
   JSON.stringify(
-    { _aviso: 'Llaves liberadas por fecha. Publicadas automáticamente; no se pueden adelantar.', updatedAt: new Date().toISOString(), keys },
+    { _aviso: 'Llaves liberadas por fecha. Publicadas automáticamente; no se pueden adelantar.', updatedAt: new Date().toISOString(), keys, dias },
     null,
     2
   ) + '\n',
   'utf8'
 );
 
-console.log(`::notice::Descifrado publicado para fragmento(s): ${added.join(', ')}`);
+console.log(`::notice::Descifrado publicado para: ${added.join(', ')}`);
 console.log('CHANGED=1');

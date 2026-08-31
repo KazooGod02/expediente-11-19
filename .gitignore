@@ -11,3 +11,7 @@ desktop.ini
 # ── manual interno: no se publica ──
 OPERACION.md
 tools/*.bak.json
+
+# ── guion del trailer: material sin estrenar ──
+GUION-TRAILER.md
+tools/diario.mjs
