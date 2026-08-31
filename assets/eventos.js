@@ -259,6 +259,9 @@ export const Eventos = {
     for (let i = 0; i < 5; i++) setTimeout(() => Sound.blip(200 + i * 90, 0.09, 0.08), i * 130);
 
     setTimeout(() => {
+      // el velo se queda de fondo, pero por DEBAJO de las ventanas:
+      // si no, el minijuego se abre detrás y no se ve nada
+      capa.classList.add('detras');
       openPurga((gano) => {
         capa.classList.add('out');
         setTimeout(() => capa.remove(), 500);

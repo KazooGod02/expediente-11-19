@@ -607,6 +607,11 @@ button{font:inherit;color:inherit;background:none;border:0}
   display:grid;place-items:center;text-align:center;padding:2rem;
   animation:hackIn .35s ease-out}
 @keyframes hackIn{from{opacity:0}to{opacity:1}}
+/* #shell crea contexto propio con z-index:10, asi que la capa de
+   ventanas (500) vive DENTRO de ese 10. Para que el velo quede
+   detras del escritorio hay que bajarlo por debajo de 10. */
+.hack.detras{z-index:4;background:rgba(0,14,6,.88)}
+.hack.detras .hack-txt{opacity:.12;transform:scale(.88)}
 .hack.out{animation:hackOut .45s ease-in forwards}
 @keyframes hackOut{to{opacity:0;visibility:hidden}}
 .hack-lluvia{position:absolute;inset:0;opacity:.3;
@@ -621,7 +626,9 @@ button{font:inherit;color:inherit;background:none;border:0}
 .hack-b{margin:.8rem 0 0;color:rgba(120,255,190,.85);font-size:.78rem;letter-spacing:.14em}
 
 /* ── purga ─────────────────────────────────────────────── */
-.purga-win{--line:rgba(60,255,160,.28);--line-hot:rgba(60,255,160,.5)}
+.purga-win{--line:rgba(60,255,160,.28);--line-hot:rgba(60,255,160,.5);
+  /* opaca a propósito: si no, el velo verde del hackeo se lee a través */
+  background:#050a08;backdrop-filter:none}
 .purga h4{color:#5cffb0}
 .purga .brief b{color:#8fffcf}
 #pgCv{display:block;width:100%;height:auto;border:1px solid rgba(60,255,160,.3);background:#03060a}
@@ -680,3 +687,56 @@ button{font:inherit;color:inherit;background:none;border:0}
   margin:0;color:var(--dimmer);font-size:.58rem;letter-spacing:.18em;
   animation:blink 2.4s steps(1) infinite}
 #boot{cursor:pointer}
+
+/* ── turno de noche ────────────────────────────────────── */
+body[data-turno="noche"]{
+  --violet:#a98fe0; --pink:#e06bb4; --ink:#cdc7dd; --dim:#6a6482;
+  --bg:#04030a; --panel:#0b0916;
+}
+body[data-turno="noche"] .bgfx{opacity:.55}
+body[data-turno="noche"] .fx-vig{background:radial-gradient(125% 100% at 50% 45%,
+  transparent 34%,rgba(0,0,0,.75) 78%,rgba(0,0,0,.96) 100%)}
+.tb-turno{color:var(--dim);font-size:.55rem;letter-spacing:.18em}
+body[data-turno="noche"] .tb-turno{color:var(--pink)}
+@media(max-width:1040px){.tb-turno{display:none}}
+
+/* ── radio de servicio ─────────────────────────────────── */
+.radio{position:absolute;right:1rem;bottom:2.6rem;width:min(300px,42vw);
+  padding:.6rem .75rem;border:1px solid var(--line-2);
+  background:rgba(16,13,26,.5);backdrop-filter:blur(6px);pointer-events:none}
+.radio-cab{margin:0 0 .4rem;color:var(--pink);font-size:.5rem;letter-spacing:.22em}
+.radio-l{margin:0 0 .22rem;color:var(--dimmer);font-size:.56rem;line-height:1.5;
+  letter-spacing:.04em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.radio-l.nueva{color:var(--dim);animation:radioIn .5s ease-out}
+@keyframes radioIn{from{opacity:0;transform:translateX(10px)}to{opacity:1;transform:none}}
+@media(max-width:760px){.radio{display:none}}
+
+/* ── mensajería con el compañero ───────────────────────── */
+.chat{display:flex;flex-direction:column;gap:.5rem;height:100%;overflow-y:auto}
+.chat-b{max-width:82%;padding:.5rem .7rem;border:1px solid var(--line-2);font-size:.72rem;line-height:1.65}
+.chat-b.ellos{align-self:flex-start;background:rgba(201,163,255,.07)}
+.chat-b.tu{align-self:flex-end;background:rgba(255,122,208,.1);border-color:var(--line-hot)}
+.chat-de{display:block;font-size:.5rem;letter-spacing:.18em;color:var(--dim);margin-bottom:.2rem}
+.chat-b.tu .chat-de{color:var(--pink);text-align:right}
+.chat-b p{margin:0;color:var(--ink)}
+.chat-ops{display:flex;flex-direction:column;gap:.3rem;align-self:flex-end;max-width:82%}
+.chat-op{padding:.35rem .7rem;cursor:pointer;font-size:.68rem;text-align:right;
+  border:1px dashed var(--line-hot);color:var(--pink);transition:.15s}
+.chat-op:hover{background:rgba(255,122,208,.14);border-style:solid}
+.icon.avisa .gl{animation:avisaGl 1.2s ease-in-out infinite}
+@keyframes avisaGl{0%,100%{text-shadow:0 0 14px rgba(201,163,255,.4)}
+  50%{text-shadow:0 0 26px rgba(255,122,208,.9)}}
+
+/* ── post-its ──────────────────────────────────────────── */
+.notas{position:absolute;inset:0;pointer-events:none}
+.nota{position:absolute;width:150px;height:150px;pointer-events:auto;
+  background:linear-gradient(160deg,#f5e79a,#e8d271);
+  box-shadow:4px 6px 16px rgba(0,0,0,.55);padding:.5rem;
+  display:flex;flex-direction:column;animation:notaIn .3s cubic-bezier(.2,.9,.3,1.3)}
+@keyframes notaIn{from{opacity:0;transform:scale(.85) rotate(0)}to{opacity:1}}
+.nota textarea{flex:1;width:100%;background:transparent;border:0;outline:none;resize:none;
+  font-family:var(--mono);font-size:.66rem;line-height:1.5;color:#2a2410}
+.nota textarea::placeholder{color:rgba(42,36,16,.4)}
+.nota-x{position:absolute;top:1px;right:3px;cursor:pointer;color:rgba(42,36,16,.5);
+  font-size:.9rem;line-height:1;padding:.1rem .25rem}
+.nota-x:hover{color:#8a2020}

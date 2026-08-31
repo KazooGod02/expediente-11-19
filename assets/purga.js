@@ -1,41 +1,131 @@
 /* ════════════════════════════════════════════════════════════
-   purga.js — PURGA DEL SISTEMA
+   purga.js — PURGA DE MEMORIA
 
-   Cuando algo entra en el terminal, hay que recorrer la memoria
-   y limpiarla sector por sector antes de que los procesos
-   hostiles te alcancen. Verde de fósforo, como debe ser.
+   Cinco zonas distintas del terminal, cada una con su plano y su
+   ritmo. Se sortea una cada vez que hay que limpiar el sistema.
+   '#' pared · '.' sector · 'o' sector grande · 'P' entrada del
+   agente · '@' punto de aparición de los procesos.
    ════════════════════════════════════════════════════════════ */
-import { Sound, Win, toast, pick } from './core.js';
+import { Sound, Win, toast, pick, rndInt } from './core.js';
 
-const MAPA = [
-  '###################',
-  '#........#........#',
-  '#o##.###.#.###.##o#',
-  '#.................#',
-  '#.##.#.#####.#.##.#',
-  '#....#...#...#....#',
-  '####.###.#.###.####',
-  '#........@........#',
-  '####.###.#.###.####',
-  '#....#...#...#....#',
-  '#.##.#.#####.#.##.#',
-  '#.................#',
-  '#o##.###.#.###.##o#',
-  '#........#........#',
-  '###################',
+const ZONAS = [
+  {
+    nombre: 'MEMORIA PRINCIPAL', procesos: 3, ritmo: 165, miedo: 300,
+    mapa: [
+      '###################',
+      '#........#........#',
+      '#o##.###.#.###.##o#',
+      '#.................#',
+      '#.##.#.#####.#.##.#',
+      '#....#...#...#....#',
+      '####.###.#.###.####',
+      '#........@........#',
+      '####.###.#.###.####',
+      '#....#...#...#....#',
+      '#.##.#.#####.#.##.#',
+      '#........P........#',
+      '#o##.###.#.###.##o#',
+      '#........#........#',
+      '###################',
+    ],
+  },
+  {
+    nombre: 'SECTOR DE ARRANQUE', procesos: 3, ritmo: 150, miedo: 260,
+    mapa: [
+      '###################',
+      '#o...............o#',
+      '#.###.#######.###.#',
+      '#...............#.#',
+      '#.#.###.###.###...#',
+      '#.#.......#.....#.#',
+      '#.###.#####.###.#.#',
+      '#.........@.......#',
+      '#.###.#####.###.#.#',
+      '#.#.......#.....#.#',
+      '#.#.###.###.###...#',
+      '#...............#.#',
+      '#.###.#######.###.#',
+      '#o.......P.......o#',
+      '###################',
+    ],
+  },
+  {
+    nombre: 'TABLA DE ARCHIVOS', procesos: 4, ritmo: 172, miedo: 330,
+    mapa: [
+      '###################',
+      '#o...............o#',
+      '#.....#.....#.....#',
+      '#.###.#.###.#.###.#',
+      '#.#.......@.....#.#',
+      '#.#.###.#####.#.#.#',
+      '#.....#.....#.....#',
+      '#.###.#.###.#.###.#',
+      '#.....#.....#.....#',
+      '#.#.###.#####.#.#.#',
+      '#.#.............#.#',
+      '#.###.#.###.#.###.#',
+      '#.....#..P..#.....#',
+      '#o...............o#',
+      '###################',
+    ],
+  },
+  {
+    nombre: 'NÚCLEO', procesos: 2, ritmo: 128, miedo: 240,
+    mapa: [
+      '###################',
+      '#o...............o#',
+      '#.##.##.###.##.##.#',
+      '#.................#',
+      '#.##.##.###.##.##.#',
+      '#.................#',
+      '#.##.##.@..##.##..#',
+      '#.................#',
+      '#.##.##.###.##.##.#',
+      '#........P........#',
+      '#.##.##.###.##.##.#',
+      '#.................#',
+      '#.##.##.###.##.##.#',
+      '#o...............o#',
+      '###################',
+    ],
+  },
+  {
+    nombre: 'COPIA DE RESPALDO', procesos: 3, ritmo: 178, miedo: 340,
+    mapa: [
+      '###################',
+      '#o...............o#',
+      '#.#.#.#.#.#.#.#.#.#',
+      '#.................#',
+      '#.###.#.###.#.###.#',
+      '#.................#',
+      '#.#.#.#..@..#.#.#.#',
+      '#.................#',
+      '#.###.#.###.#.###.#',
+      '#.................#',
+      '#.#.#.#..P..#.#.#.#',
+      '#.................#',
+      '#.###.#.###.#.###.#',
+      '#o...............o#',
+      '###################',
+    ],
+  },
 ];
-const COLS = MAPA[0].length, ROWS = MAPA.length, CELL = 22;
+
+const CELL = 22;
 const DIRS = { ArrowUp: [0, -1], ArrowDown: [0, 1], ArrowLeft: [-1, 0], ArrowRight: [1, 0] };
 
 /**
- * Abre la purga. `onFin(true|false)` se llama al ganar o perder.
- * `motivo` sale en la cabecera para explicar por qué se abre.
+ * Abre la purga. `onFin(true|false)` se llama al terminar.
+ * `motivo` sale de cabecera. `idx` fuerza una zona concreta.
  */
-export function openPurga(onFin, motivo = 'INTRUSIÓN DETECTADA') {
+export function openPurga(onFin, motivo = 'INTRUSIÓN DETECTADA', idx = null) {
+  const zona = ZONAS[idx ?? rndInt(0, ZONAS.length - 1)];
+  const COLS = zona.mapa[0].length, ROWS = zona.mapa.length;
+
   const win = Win.open({
     id: 'purga',
-    title: 'PURGA DE MEMORIA — proceso crítico',
-    w: COLS * CELL + 40, h: ROWS * CELL + 210,
+    title: 'PURGA DE MEMORIA — ' + zona.nombre,
+    w: COLS * CELL + 42, h: ROWS * CELL + 250,
     cls: 'purga-win',
   });
   if (win.body.dataset.built) return;
@@ -45,15 +135,16 @@ export function openPurga(onFin, motivo = 'INTRUSIÓN DETECTADA') {
     <div class="gm purga">
       <h4>${motivo}</h4>
       <p class="brief">
-        Algo se está copiando por la memoria del terminal.
+        Zona afectada: <b>${zona.nombre}</b>.
         Recorra todos los sectores para limpiarlos.
-        Los <b>puntos grandes</b> invierten la situación durante unos segundos:
-        mientras parpadean, los procesos huyen y puede absorberlos.
+        Los <b>sectores grandes</b> invierten la situación unos segundos: mientras
+        parpadean, los procesos huyen y puede absorberlos.
         Muévase con las <b>flechas</b> o <b>WASD</b>.
       </p>
       <div class="purga-hud">
         <span>SECTORES <b id="pgDots">0</b></span>
         <span>INTENTOS <b id="pgVidas">♦♦♦</b></span>
+        <span>ZONA <b>${ZONAS.indexOf(zona) + 1}/${ZONAS.length}</b></span>
         <span id="pgEstado">PULSE EMPEZAR</span>
       </div>
       <canvas id="pgCv" width="${COLS * CELL}" height="${ROWS * CELL}"></canvas>
@@ -67,24 +158,34 @@ export function openPurga(onFin, motivo = 'INTRUSIÓN DETECTADA') {
   const q = (s) => win.body.querySelector(s);
   const cv = q('#pgCv'), cx = cv.getContext('2d');
 
-  let rejilla, jugador, procesos, puntos, total, vidas, miedo, bucle = 0, vivo = false, acabado = false;
+  let rejilla, jugador, procesos, puntos, total, vidas, miedo;
+  let bucle = 0, vivo = false, acabado = false;
+  let inicio = { x: 1, y: 1 }, casa = { x: 1, y: 1 };
 
   const pared = (x, y) => x < 0 || y < 0 || x >= COLS || y >= ROWS || rejilla[y][x] === '#';
 
   function reiniciar() {
-    rejilla = MAPA.map((f) => f.split(''));
+    rejilla = zona.mapa.map((f) => f.split(''));
     puntos = 0; total = 0;
+
+    for (let y = 0; y < ROWS; y++) {
+      for (let x = 0; x < COLS; x++) {
+        const c = rejilla[y][x];
+        if (c === 'P') { inicio = { x, y }; rejilla[y][x] = '.'; }
+        if (c === '@') { casa = { x, y }; rejilla[y][x] = ' '; }
+      }
+    }
     for (let y = 0; y < ROWS; y++) {
       for (let x = 0; x < COLS; x++) {
         if (rejilla[y][x] === '.' || rejilla[y][x] === 'o') total += 1;
       }
     }
-    jugador = { x: 9, y: 11, dx: 0, dy: 0, sig: null, boca: 0 };
-    procesos = [
-      { x: 9, y: 7, c: '#7df0c8' },
-      { x: 8, y: 7, c: '#c9a3ff' },
-      { x: 10, y: 7, c: '#ff7ad0' },
-    ].map((p) => ({ ...p, dx: 0, dy: -1, casa: { x: p.x, y: p.y } }));
+
+    jugador = { ...inicio, dx: 0, dy: 0, sig: null, boca: 0 };
+    const colores = ['#7df0c8', '#c9a3ff', '#ff7ad0', '#ffd166'];
+    procesos = Array.from({ length: zona.procesos }, (_, i) => ({
+      x: casa.x, y: casa.y, dx: 0, dy: -1, c: colores[i % colores.length], espera: i * 6,
+    }));
     miedo = 0;
     q('#pgDots').textContent = `0/${total}`;
   }
@@ -115,7 +216,6 @@ export function openPurga(onFin, motivo = 'INTRUSIÓN DETECTADA') {
       }
     }
 
-    // el agente
     const jx = jugador.x * CELL + CELL / 2, jy = jugador.y * CELL + CELL / 2;
     jugador.boca = (jugador.boca + 0.28) % (Math.PI / 2);
     const ang = Math.atan2(jugador.dy, jugador.dx);
@@ -126,10 +226,11 @@ export function openPurga(onFin, motivo = 'INTRUSIÓN DETECTADA') {
     cx.closePath();
     cx.fill();
 
-    // los procesos
     for (const p of procesos) {
       const px = p.x * CELL + CELL / 2, py = p.y * CELL + CELL / 2;
-      cx.fillStyle = miedo > 0 ? (miedo < 90 && Math.floor(miedo / 8) % 2 ? '#39405e' : '#5b6fff') : p.c;
+      cx.fillStyle = miedo > 0
+        ? (miedo < 90 && Math.floor(miedo / 8) % 2 ? '#39405e' : '#5b6fff')
+        : p.c;
       cx.beginPath();
       cx.arc(px, py, CELL / 2 - 2, Math.PI, 0);
       cx.lineTo(px + CELL / 2 - 2, py + CELL / 2 - 3);
@@ -144,7 +245,6 @@ export function openPurga(onFin, motivo = 'INTRUSIÓN DETECTADA') {
   }
 
   function mover() {
-    // el jugador gira en cuanto puede
     if (jugador.sig) {
       const [dx, dy] = jugador.sig;
       if (!pared(jugador.x + dx, jugador.y + dy)) {
@@ -161,7 +261,7 @@ export function openPurga(onFin, motivo = 'INTRUSIÓN DETECTADA') {
       puntos += 1;
       q('#pgDots').textContent = `${puntos}/${total}`;
       Sound.blip(c === 'o' ? 300 : 1500, 0.02, 0.03);
-      if (c === 'o') { miedo = 300; q('#pgEstado').textContent = 'PROCESOS VULNERABLES'; }
+      if (c === 'o') { miedo = zona.miedo; q('#pgEstado').textContent = 'PROCESOS VULNERABLES'; }
       if (puntos >= total) return fin(true);
     }
 
@@ -170,8 +270,8 @@ export function openPurga(onFin, motivo = 'INTRUSIÓN DETECTADA') {
       if (miedo === 0) q('#pgEstado').textContent = 'PURGANDO';
     }
 
-    // los procesos persiguen; huyen mientras dure el miedo
     for (const p of procesos) {
+      if (p.espera > 0) { p.espera -= 1; continue; }   // salen escalonados
       const ops = Object.values(DIRS).filter(([dx, dy]) =>
         !pared(p.x + dx, p.y + dy) && !(dx === -p.dx && dy === -p.dy));
       if (ops.length) {
@@ -180,7 +280,6 @@ export function openPurga(onFin, motivo = 'INTRUSIÓN DETECTADA') {
           return miedo > 0 ? -d : d;
         };
         ops.sort((a, b) => peso(a) - peso(b));
-        // algo de azar para que no sea siempre óptimo
         const [dx, dy] = Math.random() < 0.78 ? ops[0] : pick(ops);
         p.dx = dx; p.dy = dy;
       }
@@ -189,7 +288,7 @@ export function openPurga(onFin, motivo = 'INTRUSIÓN DETECTADA') {
       if (p.x === jugador.x && p.y === jugador.y) {
         if (miedo > 0) {
           Sound.blip(1200, 0.12, 0.09);
-          p.x = p.casa.x; p.y = p.casa.y; p.dx = 0; p.dy = -1;
+          p.x = casa.x; p.y = casa.y; p.dx = 0; p.dy = -1; p.espera = 10;
         } else {
           return tocado();
         }
@@ -202,8 +301,10 @@ export function openPurga(onFin, motivo = 'INTRUSIÓN DETECTADA') {
     q('#pgVidas').textContent = '♦'.repeat(Math.max(0, vidas)) + '◇'.repeat(3 - Math.max(0, vidas));
     Sound.buzz();
     if (vidas <= 0) return fin(false);
-    jugador.x = 9; jugador.y = 11; jugador.dx = 0; jugador.dy = 0; jugador.sig = null;
-    procesos.forEach((p) => { p.x = p.casa.x; p.y = p.casa.y; p.dx = 0; p.dy = -1; });
+    jugador = { ...inicio, dx: 0, dy: 0, sig: null, boca: 0 };
+    procesos.forEach((p, i) => {
+      p.x = casa.x; p.y = casa.y; p.dx = 0; p.dy = -1; p.espera = i * 6 + 8;
+    });
     miedo = 0;
     q('#pgEstado').textContent = 'SECTOR REINICIADO';
   }
@@ -218,7 +319,7 @@ export function openPurga(onFin, motivo = 'INTRUSIÓN DETECTADA') {
     if (gano) {
       Sound.fanfare();
       q('#pgEstado').textContent = 'MEMORIA LIMPIA';
-      q('#pgOut').innerHTML = `<div class="won">MEMORIA PURGADA.<br>
+      q('#pgOut').innerHTML = `<div class="won">${zona.nombre} PURGADA.<br>
         El proceso hostil ha sido eliminado del terminal.</div>`;
     } else {
       q('#pgEstado').textContent = 'PURGA FALLIDA';
@@ -236,7 +337,8 @@ export function openPurga(onFin, motivo = 'INTRUSIÓN DETECTADA') {
     q('#pgOut').innerHTML = '';
     q('#pgGo').textContent = 'REINICIAR';
     clearInterval(bucle);
-    bucle = setInterval(() => { if (vivo) { mover(); pintar(); } }, 165);
+    bucle = setInterval(() => { if (vivo) { mover(); pintar(); } }, zona.ritmo);
+    win.root.focus();
   }
 
   q('#pgGo').addEventListener('click', empezar);
@@ -251,7 +353,6 @@ export function openPurga(onFin, motivo = 'INTRUSIÓN DETECTADA') {
   });
   setTimeout(() => win.root.focus(), 80);
 
-  // deslizar en táctil
   let tx = 0, ty = 0;
   cv.addEventListener('pointerdown', (e) => { tx = e.clientX; ty = e.clientY; });
   cv.addEventListener('pointerup', (e) => {
@@ -264,3 +365,5 @@ export function openPurga(onFin, motivo = 'INTRUSIÓN DETECTADA') {
   reiniciar();
   pintar();
 }
+
+export const ZONAS_PURGA = ZONAS;

@@ -9,6 +9,7 @@ import { openAnalisis, openCaja, openSecuencia, openDescifrar } from './games.js
 import { openPoster } from './poster.js';
 import { Diario, openDiario, refreshDiarioIfOpen, avisarTareas, setTareaHandler } from './diario.js';
 import { Eventos } from './eventos.js';
+import { Turno, Radio, Compa, Notas, openPapelera, openNotas } from './vida.js';
 
 /* ─────────────────────────────────────────────────────────────
    CONFIGURACIÓN — edita solo este bloque
@@ -237,6 +238,8 @@ const HELP = [
   'DIARIO         parte del día y tareas',
   'EXPEDIENTE     partes del caso 11-19',
   'INFORME        lo que lleva escrito del caso',
+  'PAPELERA       expedientes descartados',
+  'NOTA           deja una nota en el escritorio',
   'MENSAJES       correo interno',
   'HERRAMIENTAS   utilidades autorizadas',
   'CARTEL         generador de carteles de búsqueda',
@@ -306,6 +309,19 @@ function command(raw) {
 
     case 'EXPEDIENTE': case 'CASO':
       openExpediente(); Term.print('Abriendo expediente 11-19...', 't-ok'); break;
+
+    case 'PAPELERA': case 'DESCARTADOS':
+      openPapelera(); Term.print('Abriendo la papelera...', 't-ok'); break;
+
+    case 'BERNAL': case 'CHAT':
+      Compa.abrir(); Term.print('Abriendo mensajería interna...', 't-ok'); break;
+
+    case 'NOTA': case 'NOTAS':
+      openNotas(); break;
+
+    case 'RADIO':
+      Term.type(Radio.lineas.length ? ['BANDA DE SERVICIO:', ...Radio.lineas] : ['La radio está en silencio.'], 't-dim');
+      break;
 
     case 'INFORME': case 'REPORTE': case 'SUJETOS':
       openReporte(); Term.print('Abriendo su informe...', 't-ok'); break;
@@ -905,6 +921,9 @@ const ICONS = [
     badge: () => Vault.manifest && [...Vault.open.keys()].some((k) => !State.seen.has(k)) },
   { id: 'msg', gl: '✉', lb: 'CORREO', act: openMensajes, badge: () => sinLeer() > 0 },
   { id: 'rep', gl: '✒', lb: 'INFORME', act: openReporte },
+  { id: 'chat', gl: '✉', lb: 'BERNAL', act: () => Compa.abrir() },
+  { id: 'trash', gl: '⌧', lb: 'PAPELERA', act: openPapelera },
+  { id: 'nota', gl: '▤', lb: 'NOTA NUEVA', act: openNotas },
   { id: 'poster', gl: '◫', lb: 'CARTEL', act: openPoster },
   { id: 'tape', gl: '▣', lb: 'ANÁLISIS DE CINTA', act: () => openAnalisis(gameCtx) },
   { id: 'final', gl: '⌖', lb: 'POSICIÓN', act: openFinal, need: () => State.complete },
@@ -1166,6 +1185,14 @@ async function boot() {
       `PARTE DIARIO: ${Diario.pendientesHoy()} tarea(s) pendientes. Escriba DIARIO.`,
     ], 't-ok');
   }
+
+  Turno.vigilar(() => {
+    notify('CENTRAL', 'Pasan de las doce. ¿Sigue ahí, agente?', () => openMensajes());
+    Term.print('>> TURNO DE NOCHE. EL EDIFICIO ESTÁ VACÍO.', 't-warn');
+  });
+  Radio.arrancar();
+  Compa.arrancar();
+  Notas.pintar();
 
   Eventos.init({
     consola: (t, c) => Term.print(t, c),
