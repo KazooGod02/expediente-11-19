@@ -1,0 +1,49 @@
+name: Liberar descifrado
+
+# Publica la llave de cada fragmento el día que le toca.
+# Sin este workflow (o sin el secreto LEONIDA_MASTER) los fragmentos
+# se quedan cifrados para siempre: esa es exactamente la idea.
+
+on:
+  schedule:
+    - cron: '7 */2 * * *'   # cada 2 horas (UTC)
+  workflow_dispatch:         # y a mano desde la pestaña Actions
+
+permissions:
+  contents: write
+
+concurrency:
+  group: leonida-release
+  cancel-in-progress: false
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Derivar y publicar las llaves vencidas
+        env:
+          LEONIDA_MASTER: ${{ secrets.LEONIDA_MASTER }}
+        run: |
+          if [ -z "$LEONIDA_MASTER" ]; then
+            echo "::error::Falta el secreto LEONIDA_MASTER. Ejecuta: gh secret set LEONIDA_MASTER"
+            exit 1
+          fi
+          node tools/release.mjs
+
+      - name: Confirmar cambios
+        run: |
+          if git diff --quiet -- data/keys.json; then
+            echo "Sin llaves nuevas."
+            exit 0
+          fi
+          git config user.name  "receptor-de-campo"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data/keys.json
+          git commit -m "senal: descifrado publicado $(date -u +%Y-%m-%dT%H:%MZ)"
+          git push

@@ -1,0 +1,9 @@
+# ── SECRETOS: nunca deben salir de tu equipo ──
+tools/master.key
+tools/plaintexts.json
+
+# ── ruido del sistema ──
+node_modules/
+.DS_Store
+Thumbs.db
+desktop.ini

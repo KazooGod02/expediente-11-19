@@ -1,0 +1,56 @@
+{
+  "_aviso": "Criptograma AES-256-GCM. Las llaves se publican en data/keys.json en su fecha. No hay forma de adelantarlas.",
+  "algo": "AES-256-GCM",
+  "total": 8,
+  "forgedAt": "2026-08-30T23:59:25.165Z",
+  "fragments": [
+    {
+      "id": 1,
+      "unlockAt": "2026-08-30T00:00:00Z",
+      "iv": "CGdmMpExV/z4FAE4",
+      "ct": "REE9V7HQRA+TrlEY4xRN92pUTzm016ZOQpto3WGuFguQSXLikb+BLP9VKnRDpRh6uUrfDNq/eXvHmNihn4wTWQxluOpHCLjBg02kD7W6MemBDRX9/BG+OGVTCrUnNTdJpUUmgvr6qbIAMO+hr4DCY6pLE8nkknWEO94J+R8CAaWFFCDsSmAEqDS4g3f1Sub7TL6OiLLaapLxGuvppUMCIlz977sk28UMNCjJBaDoCDWmvI80gThlj9HB5HdDtPHICxLrueZn1wgjCdu4I8H3UDCCmma+XzxtdvZW3YvAVYmS/LrWGicnftIXDo5BaX8y18qq1PocS9gYK2YWQNtAgqQ4Y9OEJTEVEkDRXF6RLt5AMd6nX8N8lJu1Mb1moj/3EpK4XQjOASuid3wYvR59PZda8An3kpuBsPMLB0lHSc3Ql5kEOfrEIVTCvowdY4bmMrEYgJF+WRI03XLuT9QtxtK/i9+guYSYe8dS6acCGSQmuHgfUZP+S8MDfLh7Mjo0FzBfnw3On/H0HkWaofcB8Cu05kZmjtPL/zWYHDoiJUo4FOQ="
+    },
+    {
+      "id": 2,
+      "unlockAt": "2026-09-08T21:00:00Z",
+      "iv": "6b+XVbw0YTT7OVVU",
+      "ct": "tzV6Q/p4OZdo88rJaCHCPeRa0I37ie9FueA/B06BDt091e2hIMs6RYp61DoGAkf7drxe3rKXRTlOM9FKLt3hCzfuIVSgvOGqVnMR82hRTuHu64WsvZDYHxMYXigtbEoJz6Lr3/p6drM1NqxJJBwzhTxwFGH3jRnR87Z45fnRYAhTGkpHSVg0tteh7S+v7/IQdD+yW0E3utIEOa2T8OvCVcogV6eqx8s+oINel2rw3bCJ31tnjwdHiCahAbmpsppu7jQshUMlnxjGjyoLeLkBFZmPQerGN2fzeL78O+ysBEIukFtkhIVWnzpkpDCA4liNMw8CW37GY+O7eth1HcCatQJdDXWcAaolHEZRzT8X7N44mvLyqJ+YRg=="
+    },
+    {
+      "id": 3,
+      "unlockAt": "2026-09-19T21:00:00Z",
+      "iv": "hAtgbkoFwy5JLgGf",
+      "ct": "t3hj/cMSFLfLXhgfgNV4qolVtTJKyncXMp/98lFZm3dEMgpDcTib23xfOzRG/s8NjQVAUxCc5R4b4HNvscSseFCZx1joujrvrocFaE+HUfWsPWjM2bXNMg0Xc3vEoUbul94PUMrH4mUjL2NfbWFbZp3m2JvVrf5XB1nyyE2S6PIzPOX2KYZpOqKNn8Paj24bz0PXLpCY/oF/ApQ/mKGJ3LNjMiFXCgCZvqYEG1xkX27ONL/uBSjmMXD2QfrHHIAJarW9aVeh2cdWRVkeYtbtIPL/UvAYdekY522XpXxtOD9+Ryb6TYymjOJZ14u4rPZzC0PdHqsHgzTHNf6xFWpfKQqcZOG5RGeNcu52fMqDdmGsB13l3f+ll87nLIFY/pqgS1CrdjNEEnOSOyrXrkUi2Ntuh2ri"
+    },
+    {
+      "id": 4,
+      "unlockAt": "2026-10-01T21:00:00Z",
+      "iv": "XsNXcdaDgwyCogcL",
+      "ct": "sNh0R8oyMJPJvNJJK+6ZvhQ1RRX9rLFBPUJb/K8z/IJpKJ/bd1xAC3QIRoDtMhD2CkX3qkZc5EkKZRpd19UlEQQBJP3rERusnWtArD2D7sg6APmipWxDCoF13LglAiD/8Fq73KODWy6wPq5DZImg8lJKpFAA1oto34o/cvii/imAm9Redj0uCNMNCSBfHrSAMqJX9MqGr6T24S4gscAGbb5cKcl5PIskbmOIyftrNxjCBKq05YjQxriROqyF9DzcUQ0dmbg+pY176BoxzdHdFyO/TAvv49zuOjv5pGnIA8EI8mOTPAfVy6kc1ZXxKPEJqDNX/HcdJXg16TvgbWdGPNU="
+    },
+    {
+      "id": 5,
+      "unlockAt": "2026-10-13T21:00:00Z",
+      "iv": "0070JVBOeSmaY2/i",
+      "ct": "YVmrAq5cUhU5+/d8xR2CpZXuCin+am/rKNAnfw3TqmhO+mZ8YZOY4KMA7nzhgdC6w+u0Y8ib+zUJKVtdkXpyHApMQZr4hmAW+Cn9S8xJhhVmDYovqsNOVH01rSueg40oOdDDilL7vyBm4IzWjY0bHD3em47+x+zeM/zEMFtbsuhLRlplluN93VStG5NTpkQx7JD/fHwDug0I7BuuS4OiPSpKlbncSz54q6wHNg=="
+    },
+    {
+      "id": 6,
+      "unlockAt": "2026-10-26T21:00:00Z",
+      "iv": "2FfnNVmass24p5UL",
+      "ct": "oh/NbjKfdrTxACS6eIVOFxsRPzCL8LRiAqdjpgl2XZjINwbT/goB866hkhgI/4ErWc5M3XIbX6D3bzaycDuL+sJ/ykUrXOI250srwA0v+qcxQYfa5f4TNrZBc07YMCVDK/Gh/qrw6Cj0voHpkSkPG3dyqaje+2U47ZU+QMDyDJA577g3VJt22eDKZrdwO5EIXRxP0KeTiP2Y/fF35HDWQ3xfeCmqYR97RMUWJGepw/9ZOhefxxvmKZGeeXLZwZkmG/vOEgqK1kpXcZ1T60X6arQy+S3DAOY2uOjo2B4aUu69tDtkFQnENNWuodBJUuRIyfzQAHqgCQKl1LD01njvMKP7AbFE4Y6NvGJxDoQVlEnu+Aabvxg="
+    },
+    {
+      "id": 7,
+      "unlockAt": "2026-11-07T21:00:00Z",
+      "iv": "W3h/cZhyZ5oOa/sS",
+      "ct": "kveAbovGTm3zcBBsyCiCadfmEohP0D2bkaUxge92kHjT5YYEzbmOYQZei8K11yAW/+8qr74j8Ew2CyxGqBzHNYkfW3Q6VDEdUjGcQ9y9QWkho9a4OPTbVyqnsuUdcQcoE0SWwwPgHsMhmMstoZBhfebUaY8rtjUr6bmrYntH/nFy96VeLKvaMKPnob6t5n+rMY8FawN+hu7+d5xG3nN2vIknRKD1cZN03XdORA3JcUjZEtvBTnoIky+RDmNdWEA9TAlC/iHQaw5kIlVthxRuEiD1EL7Sw+S07AI="
+    },
+    {
+      "id": 8,
+      "unlockAt": "2026-11-19T05:00:00Z",
+      "iv": "RreKaPb9dLh+jDpj",
+      "ct": "tw9itTu5cwRZtcqjCDlLBBCX8kPoxYTTw07muiCJAwNfSpr0tdGI6cxrqqeCr1xIwMSacp+98bEWPnlPxuPQMD4+ny5T1W+9AIT4fNbsat0OlaM9MpV1DTlW3xoegkiA4sGBvAkx0KuDtok7awlJYs7zlUtyTgH6RuYHf9m7nPQfM6e3mOtq1g5GFMg7BY4vKosWC7vkKiIN/a+0hLjgMTPP82fXwJkuwnGvGqkaSg7IUg7L4NhmGNsVViXN5nA3vnAluLKcS5sivlym25DHUbrXal8V"
+    }
+  ]
+}
