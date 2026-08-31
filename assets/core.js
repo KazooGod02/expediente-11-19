@@ -1,19 +1,19 @@
 /* ════════════════════════════════════════════════════════════
-   core.js — utilidades, audio y gestor de ventanas
+   core.js — utilidades, audio, ventanas y avisos
    ════════════════════════════════════════════════════════════ */
 
 /* ─────────────────────────────────────────────────────────────
    ⚠️ LOGO ASCII — sustituye este bloque por tu K.
-   Cualquier generador de "ASCII art" sirve; pega el resultado
+   Cualquier generador de "ASCII art" sirve: pega el resultado
    entre las comillas y respeta los saltos de línea.
    ───────────────────────────────────────────────────────────── */
 export const ASCII_K = String.raw`
-   ██╗  ██╗
-   ██║ ██╔╝
-   █████╔╝
-   ██╔═██╗
-   ██║  ██╗
-   ╚═╝  ╚═╝
+   ██╗  ██╗    ██████╗    ██████╗
+   ██║ ██╔╝    ██╔══██╗   ██╔══██╗
+   █████╔╝     ██████╔╝   ██║  ██║
+   ██╔═██╗     ██╔═══╝    ██║  ██║
+   ██║  ██╗ ██╗██║     ██╗██████╔╝
+   ╚═╝  ╚═╝ ╚═╝╚═╝     ╚═╝╚═════╝
 `;
 
 /* ── utilidades ──────────────────────────────────────────── */
@@ -25,13 +25,16 @@ export const norm = (s) =>
   String(s).normalize('NFD').replace(/[\u0300-\u036f]/g, '').toUpperCase().trim();
 export const REDUCED = matchMedia('(prefers-reduced-motion: reduce)').matches;
 export const isPhone = () => matchMedia('(max-width: 760px)').matches;
+export const rnd = (a, b) => a + Math.random() * (b - a);
+export const rndInt = (a, b) => Math.floor(rnd(a, b + 1));
+export const pick = (arr) => arr[(Math.random() * arr.length) | 0];
 
 export const store = {
   get(k, d = null) {
-    try { const v = localStorage.getItem('oic.' + k); return v === null ? d : JSON.parse(v); }
+    try { const v = localStorage.getItem('kpd.' + k); return v === null ? d : JSON.parse(v); }
     catch { return d; }
   },
-  set(k, v) { try { localStorage.setItem('oic.' + k, JSON.stringify(v)); } catch { /* modo privado */ } },
+  set(k, v) { try { localStorage.setItem('kpd.' + k, JSON.stringify(v)); } catch { /* modo privado */ } },
 };
 
 export function b64(s) {
@@ -54,6 +57,26 @@ export function toast(msg, ms = 2800) {
   toastTimer = setTimeout(() => el.classList.remove('on'), ms);
 }
 
+/** Escribe un texto letra a letra dentro de un elemento. */
+export async function typeInto(el, text, speed = 12) {
+  if (REDUCED) { el.textContent = text; return; }
+  for (let i = 0; i <= text.length; i++) {
+    el.textContent = text.slice(0, i);
+    if (i % 3 === 0) await wait(speed);
+  }
+}
+
+/** Resuelve un texto desde el ruido, como si se descifrase. */
+export async function resolveInto(el, text, steps = 6, ms = 26) {
+  if (REDUCED) { el.textContent = text; return; }
+  for (let s = 0; s <= steps; s++) {
+    const shown = Math.floor((text.length * s) / steps);
+    el.textContent = text.slice(0, shown) + noise(Math.min(12, text.length - shown));
+    await wait(ms);
+  }
+  el.textContent = text;
+}
+
 /* ── audio sintetizado ───────────────────────────────────── */
 export const Sound = {
   ctx: null, on: true, ready: false, master: null, hum: null,
@@ -65,29 +88,28 @@ export const Sound = {
     const ctx = (this.ctx = new AC());
 
     this.master = ctx.createGain();
-    this.master.gain.value = 0.45;
+    this.master.gain.value = 0.42;
     this.master.connect(ctx.destination);
 
     // zumbido de sala de máquinas, muy por debajo
     const o = ctx.createOscillator();
-    o.type = 'sine'; o.frequency.value = 52;
+    o.type = 'sine'; o.frequency.value = 54;
     this.hum = ctx.createGain();
     this.hum.gain.value = 0;
     o.connect(this.hum).connect(this.master);
     o.start();
-    this.hum.gain.setTargetAtTime(0.035, ctx.currentTime, 2.5);
+    this.hum.gain.setTargetAtTime(0.03, ctx.currentTime, 2.5);
 
     this.ready = true;
   },
 
   toggle() {
     this.on = !this.on;
-    if (this.ready) this.master.gain.setTargetAtTime(this.on ? 0.45 : 0, this.ctx.currentTime, 0.12);
+    if (this.ready) this.master.gain.setTargetAtTime(this.on ? 0.42 : 0, this.ctx.currentTime, 0.12);
     return this.on;
   },
 
-  /** Pitido corto. Se usa para teclas, aperturas y avisos. */
-  blip(freq = 760, dur = 0.05, vol = 0.08, type = 'square') {
+  blip(freq = 760, dur = 0.05, vol = 0.07, type = 'square') {
     if (!this.ready || !this.on) return;
     const t = this.ctx.currentTime;
     const o = this.ctx.createOscillator();
@@ -100,8 +122,7 @@ export const Sound = {
     o.start(t); o.stop(t + dur + 0.02);
   },
 
-  /** Tono sostenido con envolvente suave: el minijuego de secuencia. */
-  tone(freq, dur = 0.42, vol = 0.13, when = 0) {
+  tone(freq, dur = 0.42, vol = 0.12, when = 0) {
     if (!this.ready || !this.on) return;
     const t = this.ctx.currentTime + when;
     const o = this.ctx.createOscillator();
@@ -115,63 +136,91 @@ export const Sound = {
     o.start(t); o.stop(t + dur + 0.02);
   },
 
-  /** Ruido corto de error. */
   buzz() {
     if (!this.ready || !this.on) return;
     const t = this.ctx.currentTime;
     const o = this.ctx.createOscillator();
     const g = this.ctx.createGain();
     o.type = 'sawtooth';
-    o.frequency.setValueAtTime(180, t);
-    o.frequency.exponentialRampToValueAtTime(60, t + 0.25);
-    g.gain.setValueAtTime(0.09, t);
-    g.gain.exponentialRampToValueAtTime(0.0001, t + 0.28);
+    o.frequency.setValueAtTime(190, t);
+    o.frequency.exponentialRampToValueAtTime(58, t + 0.26);
+    g.gain.setValueAtTime(0.08, t);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + 0.3);
     o.connect(g).connect(this.master);
-    o.start(t); o.stop(t + 0.3);
+    o.start(t); o.stop(t + 0.32);
   },
 
-  /** Acorde ascendente de logro. */
   fanfare() {
     if (!this.ready || !this.on) return;
-    [523.25, 659.25, 783.99, 1046.5].forEach((f, i) => this.tone(f, 0.3, 0.1, i * 0.11));
+    [523.25, 659.25, 783.99, 1046.5].forEach((f, i) => this.tone(f, 0.3, 0.09, i * 0.1));
+  },
+
+  /** Aviso entrante: dos notas cortas. */
+  ping() {
+    if (!this.ready || !this.on) return;
+    this.tone(880, 0.13, 0.07, 0);
+    this.tone(1174, 0.18, 0.06, 0.13);
   },
 };
 
+/* ── avisos flotantes ────────────────────────────────────── */
+export function notify(titulo, cuerpo, onClick) {
+  const wrap = $('notes');
+  if (!wrap) return;
+  const el = document.createElement('div');
+  el.className = 'note';
+  el.setAttribute('role', 'status');
+  el.innerHTML = `<p class="nt"></p><p class="nb"></p>`;
+  el.querySelector('.nt').textContent = titulo;
+  el.querySelector('.nb').textContent = cuerpo;
+
+  const kill = () => {
+    el.classList.add('out');
+    setTimeout(() => el.remove(), 320);
+  };
+  el.addEventListener('click', () => { onClick?.(); kill(); });
+  wrap.appendChild(el);
+  Sound.ping();
+  setTimeout(kill, 9000);
+  return el;
+}
+
 /* ── gestor de ventanas ──────────────────────────────────── */
-const open = new Map();
+const wins = new Map();
 let zTop = 10;
 let cascade = 0;
+let onWinsChange = null;
+
+export function setWinsListener(fn) { onWinsChange = fn; }
+function changed() { onWinsChange?.([...wins.values()].map((w) => ({ id: w.id, title: w.title, mini: w.mini, focused: w.root.classList.contains('focused') }))); }
 
 function focusWin(id) {
-  const w = open.get(id);
+  const w = wins.get(id);
   if (!w) return;
   zTop += 1;
   w.root.style.zIndex = zTop;
-  for (const [, other] of open) other.root.classList.toggle('focused', other === w);
+  for (const [, o] of wins) o.root.classList.toggle('focused', o === w);
+  changed();
 }
 
-function makeDraggable(root, handle) {
+function makeDraggable(root, handle, id) {
   if (isPhone()) return;
   let sx = 0, sy = 0, ox = 0, oy = 0, dragging = false;
 
   handle.addEventListener('pointerdown', (e) => {
-    if (e.target.closest('.win-x')) return;
+    if (e.target.closest('.win-btn')) return;
     dragging = true;
     sx = e.clientX; sy = e.clientY;
     ox = root.offsetLeft; oy = root.offsetTop;
     handle.setPointerCapture(e.pointerId);
   });
-
   handle.addEventListener('pointermove', (e) => {
     if (!dragging) return;
     const layer = root.parentElement.getBoundingClientRect();
-    // se deja siempre un trozo de barra visible para poder recuperarla
-    const nx = clamp(ox + e.clientX - sx, -root.offsetWidth + 90, layer.width - 60);
-    const ny = clamp(oy + e.clientY - sy, 0, layer.height - 34);
-    root.style.left = nx + 'px';
-    root.style.top = ny + 'px';
+    // siempre queda un trozo de barra a la vista para poder recuperarla
+    root.style.left = clamp(ox + e.clientX - sx, -root.offsetWidth + 96, layer.width - 64) + 'px';
+    root.style.top = clamp(oy + e.clientY - sy, 0, layer.height - 34) + 'px';
   });
-
   const stop = (e) => {
     if (!dragging) return;
     dragging = false;
@@ -181,10 +230,37 @@ function makeDraggable(root, handle) {
   handle.addEventListener('pointercancel', stop);
 }
 
+function makeResizable(root, grip) {
+  if (isPhone()) return;
+  let sx = 0, sy = 0, ow = 0, oh = 0, sizing = false;
+  grip.addEventListener('pointerdown', (e) => {
+    e.stopPropagation();
+    sizing = true;
+    sx = e.clientX; sy = e.clientY;
+    ow = root.offsetWidth; oh = root.offsetHeight;
+    grip.setPointerCapture(e.pointerId);
+  });
+  grip.addEventListener('pointermove', (e) => {
+    if (!sizing) return;
+    root.style.width = Math.max(280, ow + e.clientX - sx) + 'px';
+    root.style.height = Math.max(160, oh + e.clientY - sy) + 'px';
+  });
+  const stop = (e) => {
+    if (!sizing) return;
+    sizing = false;
+    try { grip.releasePointerCapture(e.pointerId); } catch { /* ya liberado */ }
+  };
+  grip.addEventListener('pointerup', stop);
+  grip.addEventListener('pointercancel', stop);
+}
+
 export const Win = {
-  /** Abre una ventana, o enfoca la que ya estuviera abierta con ese id. */
   open({ id, title, w = 520, h = 380, cls = '', onClose = null }) {
-    if (open.has(id)) { focusWin(id); return open.get(id); }
+    const found = wins.get(id);
+    if (found) {
+      if (found.mini) this.restore(id); else focusWin(id);
+      return found;
+    }
 
     const layer = $('winlayer');
     const root = document.createElement('section');
@@ -194,20 +270,18 @@ export const Win = {
 
     const bar = document.createElement('header');
     bar.className = 'win-bar';
-    const t = document.createElement('span');
-    t.className = 'win-t';
-    t.textContent = title;
-    const x = document.createElement('button');
-    x.className = 'win-x';
-    x.type = 'button';
-    x.setAttribute('aria-label', 'Cerrar ' + title);
-    x.textContent = '×';
-    bar.append(t, x);
+    bar.innerHTML = `<span class="win-t"></span>
+      <button class="win-btn win-m" type="button" aria-label="Minimizar">–</button>
+      <button class="win-btn win-x" type="button" aria-label="Cerrar">×</button>`;
+    bar.querySelector('.win-t').textContent = title;
 
     const body = document.createElement('div');
     body.className = 'win-body';
 
-    root.append(bar, body);
+    const grip = document.createElement('div');
+    grip.className = 'win-rz';
+
+    root.append(bar, body, grip);
 
     if (!isPhone()) {
       const lw = layer.clientWidth, lh = layer.clientHeight;
@@ -215,35 +289,66 @@ export const Win = {
       const height = Math.min(h, lh - 24);
       root.style.width = width + 'px';
       root.style.height = height + 'px';
-      const off = (cascade++ % 6) * 26;
-      root.style.left = clamp(Math.round((lw - width) / 2) + off - 60, 8, Math.max(8, lw - width - 8)) + 'px';
-      root.style.top = clamp(Math.round((lh - height) / 2) + off - 60, 8, Math.max(8, lh - height - 8)) + 'px';
+      const off = (cascade++ % 7) * 24;
+      root.style.left = clamp(Math.round((lw - width) / 2) + off - 72, 8, Math.max(8, lw - width - 8)) + 'px';
+      root.style.top = clamp(Math.round((lh - height) / 2) + off - 64, 8, Math.max(8, lh - height - 8)) + 'px';
     }
 
     layer.appendChild(root);
-    const rec = { root, body, id, close: () => Win.close(id) };
-    open.set(id, rec);
+    const rec = { root, body, id, title, mini: false, _onClose: onClose, close: () => Win.close(id) };
+    wins.set(id, rec);
     focusWin(id);
 
-    x.addEventListener('click', () => Win.close(id));
-    root.addEventListener('pointerdown', () => focusWin(id));
-    makeDraggable(root, bar);
-    rec._onClose = onClose;
+    bar.querySelector('.win-x').addEventListener('click', () => Win.close(id));
+    bar.querySelector('.win-m').addEventListener('click', () => Win.minimize(id));
+    root.addEventListener('pointerdown', () => { if (!rec.mini) focusWin(id); });
+    makeDraggable(root, bar, id);
+    makeResizable(root, grip);
 
-    Sound.blip(880, 0.04, 0.05);
+    Sound.blip(760, 0.04, 0.05);
     return rec;
   },
 
   close(id) {
-    const w = open.get(id);
+    const w = wins.get(id);
     if (!w) return;
     w._onClose?.();
-    w.root.remove();
-    open.delete(id);
-    Sound.blip(420, 0.05, 0.05);
+    w.root.classList.add('closing');
+    setTimeout(() => w.root.remove(), 170);
+    wins.delete(id);
+    Sound.blip(400, 0.05, 0.05);
+    changed();
   },
 
-  isOpen: (id) => open.has(id),
-  get(id) { return open.get(id); },
-  closeAll() { for (const id of [...open.keys()]) this.close(id); },
+  minimize(id) {
+    const w = wins.get(id);
+    if (!w || w.mini) return;
+    w.mini = true;
+    w.root.classList.add('mini');
+    setTimeout(() => { if (w.mini) w.root.style.display = 'none'; }, 190);
+    Sound.blip(340, 0.05, 0.05);
+    changed();
+  },
+
+  restore(id) {
+    const w = wins.get(id);
+    if (!w) return;
+    w.mini = false;
+    w.root.style.display = '';
+    w.root.classList.remove('mini');
+    focusWin(id);
+    Sound.blip(700, 0.04, 0.05);
+  },
+
+  toggle(id) {
+    const w = wins.get(id);
+    if (!w) return;
+    if (w.mini) this.restore(id);
+    else if (w.root.classList.contains('focused')) this.minimize(id);
+    else focusWin(id);
+  },
+
+  isOpen: (id) => wins.has(id),
+  get: (id) => wins.get(id),
+  list: () => [...wins.values()],
 };

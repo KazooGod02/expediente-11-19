@@ -3,17 +3,17 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>O.I.C. — TERMINAL DE CAMPO</title>
-<meta name="description" content="Oficina de Investigación Criminal. División de Casos Abiertos. Expediente 11-19.">
-<meta name="theme-color" content="#05070a">
+<title>K.P.D. — TERMINAL DE CAMPO</title>
+<meta name="description" content="Kazoo Police Department. División de Casos Abiertos. Expediente 11-19.">
+<meta name="theme-color" content="#07060c">
 
 <meta property="og:type" content="website">
 <meta property="og:title" content="EXPEDIENTE 11-19 — ACCESO RESTRINGIDO">
-<meta property="og:description" content="Tres sospechosos. Cuatro minutos. Una caja fuerte que nadie ha reclamado.">
+<meta property="og:description" content="Tres sujetos. Cuatro minutos. Una caja que nadie ha reclamado.">
 <meta property="og:image" content="assets/og.jpg">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="EXPEDIENTE 11-19 — ACCESO RESTRINGIDO">
-<meta name="twitter:description" content="Tres sospechosos. Cuatro minutos. Una caja fuerte que nadie ha reclamado.">
+<meta name="twitter:description" content="Tres sujetos. Cuatro minutos. Una caja que nadie ha reclamado.">
 <meta name="twitter:image" content="assets/og.jpg">
 
 <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
@@ -23,18 +23,31 @@
 <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Chakra+Petch:wght@400;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="assets/style.css">
 </head>
-<body data-phase="login">
+<body data-phase="boot">
+
+<!-- ══ fondo vivo ══ -->
+<div class="bgfx" aria-hidden="true">
+  <div class="blob b1"></div>
+  <div class="blob b2"></div>
+  <div class="blob b3"></div>
+  <div class="grid"></div>
+  <div class="rings"><i></i><i></i><i></i></div>
+  <div class="radar"></div>
+</div>
 
 <!-- ══ capas de tubo ══ -->
 <div class="fx fx-scan" aria-hidden="true"></div>
 <div class="fx fx-grain" aria-hidden="true"></div>
 <div class="fx fx-vig" aria-hidden="true"></div>
 
+<!-- ══ arranque ══ -->
+<section id="boot" aria-label="Arranque del sistema"></section>
+
 <!-- ══ acceso ══ -->
-<section id="login" aria-label="Acceso al sistema">
+<section id="login" aria-label="Acceso al sistema" hidden>
   <div class="login-box">
     <pre class="login-seal" aria-hidden="true"></pre>
-    <p class="login-org">OFICINA DE INVESTIGACIÓN CRIMINAL</p>
+    <p class="login-org">KAZOO POLICE DEPARTMENT</p>
     <p class="login-div">DIVISIÓN DE CASOS ABIERTOS</p>
     <div class="login-rule"></div>
     <p class="login-warn">SISTEMA RESTRINGIDO · TODO ACCESO QUEDA REGISTRADO</p>
@@ -51,7 +64,7 @@
   <header class="taskbar">
     <div class="tb-left">
       <span class="tb-seal">◈</span>
-      <b>O.I.C.</b>
+      <b>K.P.D.</b>
       <span class="tb-div">DIVISIÓN DE CASOS ABIERTOS</span>
     </div>
     <div class="tb-right">
@@ -62,22 +75,24 @@
     </div>
   </header>
 
-  <main class="desktop" id="desktop">
+  <main class="desktop">
     <ul class="icons" id="icons"></ul>
-    <p class="desk-hint" id="deskHint">doble clic para abrir</p>
+    <p class="desk-hint">doble clic para abrir · / abre la consola</p>
   </main>
 
   <div class="winlayer" id="winlayer"></div>
 
   <footer class="statusbar">
-    <span id="sbCase">CASO ABIERTO</span>
-    <span id="sbClaves">CLAVES 0/3</span>
+    <span id="sbClaves">LECTURAS <b>0/4</b></span>
+    <div class="sb-wins" id="sbWins"></div>
     <span id="sbCountdown">—</span>
   </footer>
 </div>
 
-<noscript><div class="nojs"><h1>O.I.C.</h1><p>Este terminal necesita JavaScript.</p></div></noscript>
+<div class="notes" id="notes" aria-live="polite"></div>
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<noscript><div class="nojs"><h1>K.P.D.</h1><p>Este terminal necesita JavaScript.</p></div></noscript>
 
 <script type="module" src="assets/app.js"></script>
 </body>
