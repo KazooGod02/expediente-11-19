@@ -290,7 +290,9 @@ export const Win = {
       root.style.width = width + 'px';
       root.style.height = height + 'px';
       const off = (cascade++ % 7) * 24;
-      root.style.left = clamp(Math.round((lw - width) / 2) + off - 72, 8, Math.max(8, lw - width - 8)) + 'px';
+      // la columna de iconos vive a la izquierda: no la tapamos si hay sitio
+      const minLeft = Math.min(148, Math.max(8, lw - width - 8));
+      root.style.left = clamp(Math.round((lw - width) / 2) + off - 40, minLeft, Math.max(minLeft, lw - width - 8)) + 'px';
       root.style.top = clamp(Math.round((lh - height) / 2) + off - 64, 8, Math.max(8, lh - height - 8)) + 'px';
     }
 
