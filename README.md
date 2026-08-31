@@ -37,7 +37,7 @@ channels: [
 ]
 ```
 
-> Ahora mismo están como `@kazoo` — cámbialos por los reales antes de publicar.
+> Configurados como `@kazoogod02`.
 
 ### 2. Sube el repositorio
 

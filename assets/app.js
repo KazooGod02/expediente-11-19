@@ -19,12 +19,11 @@ const CONFIG = {
   // Segundos tras los que los canales se abren solos, para quien no juegue con el dial.
   autoUnlock: 60,
 
-  // ⚠️ CAMBIA ESTOS ENLACES POR LOS TUYOS
   channels: [
-    { name: 'TWITCH',  handle: '@kazoo', url: 'https://twitch.tv/kazoo' },
-    { name: 'YOUTUBE', handle: '@kazoo', url: 'https://youtube.com/@kazoo' },
-    { name: 'KICK',    handle: '@kazoo', url: 'https://kick.com/kazoo' },
-    { name: 'TIKTOK',  handle: '@kazoo', url: 'https://tiktok.com/@kazoo' },
+    { name: 'TWITCH',  handle: '@kazoogod02', url: 'https://twitch.tv/kazoogod02' },
+    { name: 'YOUTUBE', handle: '@kazoogod02', url: 'https://youtube.com/@kazoogod02' },
+    { name: 'KICK',    handle: '@kazoogod02', url: 'https://kick.com/kazoogod02' },
+    { name: 'TIKTOK',  handle: '@kazoogod02', url: 'https://tiktok.com/@kazoogod02' },
   ],
 
   // La frase que forman las 8 palabras NO se guarda aquí: solo su huella.
