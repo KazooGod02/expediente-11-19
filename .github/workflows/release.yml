@@ -1,7 +1,7 @@
 name: Liberar descifrado
 
 # Publica la llave de cada fragmento el día que le toca.
-# Sin este workflow (o sin el secreto LEONIDA_MASTER) los fragmentos
+# Sin este workflow (o sin el secreto OIC_MASTER) los fragmentos
 # se quedan cifrados para siempre: esa es exactamente la idea.
 
 on:
@@ -13,7 +13,7 @@ permissions:
   contents: write
 
 concurrency:
-  group: leonida-release
+  group: oic-release
   cancel-in-progress: false
 
 jobs:
@@ -28,10 +28,10 @@ jobs:
 
       - name: Derivar y publicar las llaves vencidas
         env:
-          LEONIDA_MASTER: ${{ secrets.LEONIDA_MASTER }}
+          OIC_MASTER: ${{ secrets.OIC_MASTER }}
         run: |
-          if [ -z "$LEONIDA_MASTER" ]; then
-            echo "::error::Falta el secreto LEONIDA_MASTER. Ejecuta: gh secret set LEONIDA_MASTER"
+          if [ -z "$OIC_MASTER" ]; then
+            echo "::error::Falta el secreto OIC_MASTER. Ejecuta: gh secret set OIC_MASTER"
             exit 1
           fi
           node tools/release.mjs

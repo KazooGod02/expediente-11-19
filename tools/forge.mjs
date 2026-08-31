@@ -19,7 +19,7 @@ import { dirname, join } from 'node:path';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 const MASTER_PATH = join(ROOT, 'tools', 'master.key');
-const HKDF_SALT = 'leonida::19.11.2026';
+const HKDF_SALT = 'oic::expediente-11-19';
 
 function loadOrCreateMaster() {
   if (existsSync(MASTER_PATH)) {
@@ -40,7 +40,7 @@ function loadOrCreateMaster() {
 /** Deriva la llave AES-256 de un fragmento a partir del master. */
 export function deriveKey(master, id) {
   return Buffer.from(
-    hkdfSync('sha256', master, Buffer.from(HKDF_SALT), Buffer.from(`leonida/frag/${id}`), 32)
+    hkdfSync('sha256', master, Buffer.from(HKDF_SALT), Buffer.from(`oic/parte/${id}`), 32)
   );
 }
 
@@ -81,5 +81,5 @@ console.log(`  Cifrados ${out.length} fragmentos -> data/fragments.json`);
 for (const f of out) {
   console.log(`   [${String(f.id).padStart(2, '0')}]  ${f.unlockAt}   ${f.ct.length} B base64`);
 }
-console.log('\n  Master (para el GitHub Secret LEONIDA_MASTER):');
+console.log('\n  Master (para el GitHub Secret OIC_MASTER):');
 console.log('  ' + master.toString('hex') + '\n');

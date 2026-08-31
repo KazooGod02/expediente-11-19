@@ -3,139 +3,82 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>106.19 FM — SEÑAL NO IDENTIFICADA</title>
-<meta name="description" content="Transmisión interceptada. Expediente cifrado. 19.11.2026.">
-<meta name="theme-color" content="#05060a">
+<title>O.I.C. — TERMINAL DE CAMPO</title>
+<meta name="description" content="Oficina de Investigación Criminal. División de Casos Abiertos. Expediente 11-19.">
+<meta name="theme-color" content="#05070a">
 
 <meta property="og:type" content="website">
-<meta property="og:title" content="106.19 FM — SEÑAL NO IDENTIFICADA">
-<meta property="og:description" content="Ocho fragmentos cifrados. Las llaves todavía no existen. 19.11.2026.">
+<meta property="og:title" content="EXPEDIENTE 11-19 — ACCESO RESTRINGIDO">
+<meta property="og:description" content="Tres sospechosos. Cuatro minutos. Una caja fuerte que nadie ha reclamado.">
 <meta property="og:image" content="assets/og.jpg">
 <meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:title" content="106.19 FM — SEÑAL NO IDENTIFICADA">
-<meta name="twitter:description" content="Ocho fragmentos cifrados. Las llaves todavía no existen. 19.11.2026.">
+<meta name="twitter:title" content="EXPEDIENTE 11-19 — ACCESO RESTRINGIDO">
+<meta name="twitter:description" content="Tres sospechosos. Cuatro minutos. Una caja fuerte que nadie ha reclamado.">
 <meta name="twitter:image" content="assets/og.jpg">
 
 <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@400;600;700&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Chakra+Petch:wght@400;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="assets/style.css">
 </head>
-<body data-phase="gate">
+<body data-phase="login">
 
-<!-- capas de imagen -->
-<div class="fx fx-horizon" aria-hidden="true">
-  <div class="sun"></div>
-  <div class="grid"></div>
-  <svg class="palms" viewBox="0 0 1440 260" preserveAspectRatio="xMidYMax slice" aria-hidden="true"><g fill="#04050a"><path d="M0 260V150c26-9 46-30 52-56 3 27 21 49 46 58-19-31-16-71 8-98-8 33 6 67 34 85-14-38 3-81 39-99-24 27-25 68-2 96 4-44 40-79 84-81-38 14-62 52-56 92 18-34 60-49 95-33-33 2-59 29-61 62-1 15 4 30 13 42z"/><path d="M1440 260V126c-30-6-54-29-62-58-6 29-27 52-55 60 23-33 22-77-4-108 12 36-1 74-31 96 18-42 0-91-42-112 28 31 31 78 6 112-7-48-47-84-95-84 41 13 68 54 63 97-21-37-67-52-105-33 36 0 65 28 68 64 1 16-4 32-14 44z"/></g></svg>
-</div>
+<!-- ══ capas de tubo ══ -->
 <div class="fx fx-scan" aria-hidden="true"></div>
-<div class="fx fx-roll" aria-hidden="true"></div>
 <div class="fx fx-grain" aria-hidden="true"></div>
 <div class="fx fx-vig" aria-hidden="true"></div>
 
-<!-- compuerta -->
-<section id="gate" aria-label="Entrada">
-  <div class="gate-inner">
-    <p class="gate-kicker">BANDA CIVIL · SECTOR LEONIDA</p>
-    <h1 class="gate-freq"><span id="gateFreq">106.19</span><em>FM</em></h1>
-    <p class="gate-status" id="gateStatus">SEÑAL NO IDENTIFICADA</p>
-    <button id="gateBtn" class="gate-btn" type="button">
-      <span class="gate-btn-label">SINTONIZAR</span>
-      <span class="gate-btn-sub">activa audio · mejor con auriculares</span>
+<!-- ══ acceso ══ -->
+<section id="login" aria-label="Acceso al sistema">
+  <div class="login-box">
+    <pre class="login-seal" aria-hidden="true"></pre>
+    <p class="login-org">OFICINA DE INVESTIGACIÓN CRIMINAL</p>
+    <p class="login-div">DIVISIÓN DE CASOS ABIERTOS</p>
+    <div class="login-rule"></div>
+    <p class="login-warn">SISTEMA RESTRINGIDO · TODO ACCESO QUEDA REGISTRADO</p>
+    <p class="login-line" id="loginLine">ESPERANDO CREDENCIAL</p>
+    <button id="loginBtn" class="login-btn" type="button">
+      <span>IDENTIFICARSE</span>
+      <small>activa audio · recomendado con auriculares</small>
     </button>
-    <p class="gate-foot">TRANSMISIÓN PROGRAMADA · 19.11.2026</p>
   </div>
 </section>
 
-<!-- receptor -->
-<main id="app" hidden>
-  <header class="bar">
-    <div class="bar-id"><span class="dot"></span><b>RECEPTOR DE CAMPO</b><i id="barFreq">106.19 FM</i></div>
-    <div class="bar-meta">
-      <span class="meters" id="meters" aria-hidden="true"></span>
-      <span class="bar-sig">SEÑAL <b id="barSig">—</b></span>
-      <button id="audioBtn" class="ghost-btn" type="button" aria-pressed="true">AUDIO <b>ON</b></button>
+<!-- ══ escritorio ══ -->
+<div id="shell" hidden>
+  <header class="taskbar">
+    <div class="tb-left">
+      <span class="tb-seal">◈</span>
+      <b>O.I.C.</b>
+      <span class="tb-div">DIVISIÓN DE CASOS ABIERTOS</span>
+    </div>
+    <div class="tb-right">
+      <span class="tb-case">EXPEDIENTE <b>11-19</b></span>
+      <span class="tb-agent" id="tbAgent">AGENTE —</span>
+      <span class="tb-clock" id="tbClock">--:--:--</span>
+      <button class="tb-audio" id="audioBtn" type="button" aria-pressed="true">♪ ON</button>
     </div>
   </header>
 
-  <section class="hero">
-    <p class="hero-kicker">CUENTA REGRESIVA · HORA LOCAL DEL RECEPTOR</p>
-    <div class="clock" id="clock" role="timer">
-      <div class="unit"><b id="cD">000</b><small>DÍAS</small></div><i>:</i>
-      <div class="unit"><b id="cH">00</b><small>HORAS</small></div><i>:</i>
-      <div class="unit"><b id="cM">00</b><small>MIN</small></div><i>:</i>
-      <div class="unit"><b id="cS">00</b><small>SEG</small></div>
-    </div>
-    <h2 class="hero-date" data-text="19.11.2026">19.11.2026</h2>
-    <div class="decay">
-      <div class="decay-track"><span id="decayFill"></span></div>
-      <p class="decay-lbl"><span id="decayPct">0.00%</span> DE LA ESPERA CONSUMIDA</p>
-    </div>
-  </section>
+  <main class="desktop" id="desktop">
+    <ul class="icons" id="icons"></ul>
+    <p class="desk-hint" id="deskHint">doble clic para abrir</p>
+  </main>
 
-  <section class="dial" aria-label="Sintonizador">
-    <div class="dial-head"><b>SINTONIZADOR MANUAL</b><span id="dialHint">arrastra · ← → · algo hay cerca</span></div>
-    <canvas id="wave" height="90" aria-hidden="true"></canvas>
-    <input id="dialInput" class="dial-range" type="range" min="88" max="120" step="0.01" value="92.4" aria-label="Frecuencia en megahercios">
-    <div class="dial-scale" id="dialScale" aria-hidden="true"></div>
-    <output class="dial-read" id="dialRead">92.40 <em>MHz</em></output>
-  </section>
+  <div class="winlayer" id="winlayer"></div>
 
-  <div class="cols">
-    <section class="panel" aria-labelledby="expTitle">
-      <div class="panel-head"><h3 id="expTitle">EXPEDIENTE</h3><span id="expCount">0/8 DESCIFRADOS</span></div>
-      <ol class="frags" id="frags"></ol>
-      <p class="frag-next" id="fragNext">—</p>
-      <div class="clave-box">
-        <p class="clave-lbl">CLAVE MAESTRA · <span id="claveCount">0/8</span> PALABRAS</p>
-        <p class="clave-words" id="claveWords"></p>
-      </div>
-    </section>
-
-    <section class="panel term-panel" aria-labelledby="termTitle">
-      <div class="panel-head"><h3 id="termTitle">CONSOLA</h3><span>escribe AYUDA</span></div>
-      <div class="term" id="termOut" role="log" aria-live="polite"></div>
-      <form class="term-in" id="termForm" autocomplete="off">
-        <label class="sr-only" for="termInput">Comando</label>
-        <span class="prompt">&gt;</span>
-        <input id="termInput" type="text" spellcheck="false" placeholder="AYUDA">
-      </form>
-    </section>
-  </div>
-
-  <section class="chan" id="chan" data-open="false" aria-labelledby="chanTitle">
-    <div class="panel-head"><h3 id="chanTitle">CANALES DE EMISIÓN</h3><span id="chanState">[CLASIFICADO]</span></div>
-    <div class="chan-locked" id="chanLocked">
-      <p>Sintoniza <b>106.19</b> para abrir los canales.</p>
-      <p class="chan-auto" id="chanAuto">desbloqueo automático en <span>60</span>s</p>
-    </div>
-    <div class="chan-grid" id="chanGrid" hidden></div>
-  </section>
-
-  <footer class="foot">
-    <p class="op" id="op">OPERATIVO —</p>
-    <div class="foot-acts"><button class="ghost-btn" id="shareBtn" type="button">PROPAGAR SEÑAL</button></div>
-    <p class="legal">Maratón de fans, sin ánimo de lucro. No afiliado ni respaldado por Rockstar Games ni Take-Two Interactive. Las marcas citadas pertenecen a sus titulares.</p>
+  <footer class="statusbar">
+    <span id="sbCase">CASO ABIERTO</span>
+    <span id="sbClaves">CLAVES 0/3</span>
+    <span id="sbCountdown">—</span>
   </footer>
-</main>
-
-<noscript><div class="nojs"><h1>106.19 FM</h1><p>Esta transmisión necesita JavaScript.</p><p>19 de noviembre de 2026.</p></div></noscript>
-
-<div class="toast" id="toast" role="status" aria-live="polite"></div>
-
-<div class="modal" id="modal" hidden role="dialog" aria-modal="true" aria-labelledby="modalTitle">
-  <div class="modal-card">
-    <button class="modal-x" id="modalX" type="button" aria-label="Cerrar">×</button>
-    <p class="modal-kicker" id="modalKicker">FRAGMENTO 01</p>
-    <h4 class="modal-title" id="modalTitle">—</h4>
-    <div class="modal-body" id="modalBody"></div>
-    <p class="modal-clave" id="modalClave"></p>
-  </div>
 </div>
 
-<script src="assets/app.js" type="module"></script>
+<noscript><div class="nojs"><h1>O.I.C.</h1><p>Este terminal necesita JavaScript.</p></div></noscript>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script type="module" src="assets/app.js"></script>
 </body>
 </html>

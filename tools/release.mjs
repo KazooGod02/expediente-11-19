@@ -2,7 +2,7 @@
 /**
  * release.mjs — Publica las llaves de los fragmentos cuya fecha ya pasó.
  *
- * Se ejecuta a diario desde GitHub Actions con el secreto LEONIDA_MASTER.
+ * Se ejecuta a diario desde GitHub Actions con el secreto OIC_MASTER.
  * Deriva la llave de cada fragmento vencido y la escribe en data/keys.json.
  *
  * Antes de su fecha, la llave NO existe en ningún lugar público:
@@ -19,15 +19,15 @@ import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
-const HKDF_SALT = 'leonida::19.11.2026';
+const HKDF_SALT = 'oic::expediente-11-19';
 const argv = new Set(process.argv.slice(2));
 
 function readMaster() {
-  const fromEnv = (process.env.LEONIDA_MASTER || '').trim();
+  const fromEnv = (process.env.OIC_MASTER || '').trim();
   if (fromEnv) return Buffer.from(fromEnv, 'hex');
   const p = join(ROOT, 'tools', 'master.key');
   if (existsSync(p)) return Buffer.from(readFileSync(p, 'utf8').trim(), 'hex');
-  console.error('ERROR: falta el master. Define LEONIDA_MASTER o crea tools/master.key.');
+  console.error('ERROR: falta el master. Define OIC_MASTER o crea tools/master.key.');
   process.exit(1);
 }
 
@@ -38,7 +38,7 @@ if (master.length !== 32) {
 }
 
 const deriveKey = (id) =>
-  Buffer.from(hkdfSync('sha256', master, Buffer.from(HKDF_SALT), Buffer.from(`leonida/frag/${id}`), 32));
+  Buffer.from(hkdfSync('sha256', master, Buffer.from(HKDF_SALT), Buffer.from(`oic/parte/${id}`), 32));
 
 const manifest = JSON.parse(readFileSync(join(ROOT, 'data', 'fragments.json'), 'utf8'));
 const keysPath = join(ROOT, 'data', 'keys.json');
