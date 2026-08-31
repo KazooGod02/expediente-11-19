@@ -436,6 +436,11 @@ const Dial = {
   },
 
   set(f) {
+    // una vez enganchada la portadora, el receptor ya no la suelta
+    if (this.locked) {
+      f = CONFIG.secret;
+      $('dialInput').value = f;
+    }
     this.freq = f;
     $('dialRead').innerHTML = `${f.toFixed(2)} <em>MHz</em>`;
     $('barFreq').textContent = `${f.toFixed(2)} FM`;
