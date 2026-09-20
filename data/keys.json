@@ -1,9 +1,10 @@
 {
   "_aviso": "Llaves liberadas por fecha. Publicadas automáticamente; no se pueden adelantar.",
-  "updatedAt": "2026-09-19T00:11:16.135Z",
+  "updatedAt": "2026-09-20T00:04:46.698Z",
   "keys": {
     "1": "HI6qXv/+Ux3v+5ldp+EqKvX5dhwFFnOA6pM5hiG5Jbs=",
-    "2": "ostNlrmJy6LUYABVJZsOYdBzwfDRxR7UgxkCnLigK1o="
+    "2": "ostNlrmJy6LUYABVJZsOYdBzwfDRxR7UgxkCnLigK1o=",
+    "3": "gCJ1Zms9eokcw/lo+hYEoWBPS5QanzagohZbpK0tqls="
   },
   "dias": {
     "2026-08-30": "9HnlMMaEANR+Y9X6YQ4R+E7mCx5u8YP0NT5YZ5J+Mic=",
@@ -26,6 +27,7 @@
     "2026-09-16": "TGport5dZaCc30UOV8vJ5/6fF4KEFNiwyf7k0l8pjVE=",
     "2026-09-17": "uPrJ3VzedpASw64HHxfEtRUOdFItBOWX8QhuWwj6eC4=",
     "2026-09-18": "gYFehdyduFa4uZj1Mj+Z9aGgE2ld9FUv89WCWT+rjK8=",
-    "2026-09-19": "akDqeXaGhxgaBwTO3CsGqJldltGVx1JdTnqCBB+99MA="
+    "2026-09-19": "akDqeXaGhxgaBwTO3CsGqJldltGVx1JdTnqCBB+99MA=",
+    "2026-09-20": "1qd2+EUi5DwUkEzKNzPpFbVROaOzrVMnEm2HAHRXcOs="
   }
 }
